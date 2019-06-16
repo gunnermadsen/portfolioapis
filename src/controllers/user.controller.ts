@@ -1,7 +1,8 @@
 import * as express from 'express';
 import { Request, Response } from 'express';
-import * as userService from '../services/user-service.controller';
 import * as multer from 'multer';
+
+import { UserService } from '../services/user-service.controller';
 
 import * as fsController from './repo';
 
@@ -16,9 +17,8 @@ const auth = jwt({
 
 const router = express.Router();
 
-
-router.post('/users/login', (request: Request, response: Response, next: any) => {
-    userService.login(request, response)
+router.post('/login', (request: Request, response: Response, next: any) => {
+    UserService.login(request, response)
         .then(user => {
             return user ? response.status(200).json({ token: user.token }) : response.status(400).json({ message: "username or password is incorrect" });
             //response.status(200).json({id: user.id, email: user.email})
@@ -26,8 +26,8 @@ router.post('/users/login', (request: Request, response: Response, next: any) =>
         .catch(err => next(err));
 });
 
-router.post('/users/register', (request: Request, response: Response, next: any) => {
-    userService.create(request.body)
+router.post('/register', (request: Request, response: Response, next: any) => {
+    UserService.create(request.body)
         .then(users => {
             return response.json({ message: "Your Account Was Created Successfully", status: 200 });
         })
@@ -37,40 +37,40 @@ router.post('/users/register', (request: Request, response: Response, next: any)
 });
 
 router.get('/', (request: Request, response: Response, next: any) => {
-    userService.getAll()
+    UserService.getAll()
         .then(users => response.json(users))
         .catch(err => next(err));
 });
 
 router.get('/current', (request: Request, response: Response, next: any) => {
-    userService.getById(request.body.sub)
+    UserService.getById(request.body.sub)
         .then(users => response.json(users))
         .catch(err => next(err));
 });
 
 router.get('/:id', (request: Request, response: Response, next: any) => {
-    userService.getById(request.params.id)
+    UserService.getById(request.params.id)
         .then(user => user ? response.json(user) : response.sendStatus(404))
         .catch(err => next(err));
 })
 
 router.put('/:id', (request: Request, response: Response, next: any) => {
-    userService.update(request.params.id, request.body)
+    UserService.update(request.params.id, request.body)
         .then(() => response.json({}))
         .catch(err => next(err));
 })
 
 router.delete('/:id', (request: Request, response: Response, next: any) => {
-    userService.delete(request.params.id)
+    UserService.delete(request.params.id)
         .then(() => response.json({}))
         .catch(err => next(err));
 });
 
 //router.get("/:folder*?", fsController.readFolder);
 
-router.post("/repo", upload.any(), function (req, res, next) {
-    if (req.files) {
-        fsController.upload(req, res);
+router.post("/repo", upload.any(), (request: Request, response: Response, next: Function) => {
+    if (request.files) {
+        fsController.upload(request, response);
     } else {
         next();
     }

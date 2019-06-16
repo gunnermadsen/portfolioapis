@@ -15,21 +15,21 @@ const util = require('util');
 export const signJwt = util.promisify(jwt.sign);
 
 export class User extends Typegoose {
-    @prop({ required: true }) firstname: string;
-    @prop({ required: true }) lastname: string;
-    @prop({ unique: true, required: true }) username: string;
-    @prop() salt?: string;
-    @prop() hash?: string;
+    // @prop({ required: true }) firstname: string;
+    // @prop({ required: true }) lastname: string;
+    @prop({ unique: true, required: true }) UserName: string;
+    @prop() Salt?: string;
+    @prop() Hash?: string;
 
-    @instanceMethod setPassword(this: InstanceType<User>, password: string) {
-        this.salt = crypto.randomBytes(16).toString('hex');
-        this.hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
-        return this.hash;
+    @instanceMethod setPassword(this: InstanceType<User>, Password: string) {
+        this.Salt = crypto.randomBytes(16).toString('hex');
+        this.Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
+        return this.Hash;
     }
 
-    @instanceMethod validatePassword(this: InstanceType<User>, password: string) {
-        let hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
-        return this.hash = hash;
+    @instanceMethod validatePassword(this: InstanceType<User>, Password: string) {
+        let Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
+        return this.Hash = Hash;
     }
 
     @instanceMethod generateSessionToken(this: InstanceType<User>, userId: string) {
