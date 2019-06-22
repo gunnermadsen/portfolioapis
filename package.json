@@ -32,7 +32,8 @@
     "path": "^0.12.7",
     "reflect-metadata": "^0.1.13",
     "ts-node-dev": "^1.0.0-pre.40",
-    "typegoose": "^5.7.2"
+    "typegoose": "^5.7.2",
+    "typescript": "^3.5.2"
   },
   "devDependencies": {
     "@trongnd/ts-nodemon": "^1.0.3",
@@ -44,6 +45,5 @@
     "@types/async": "^3.0.0",
     "@types/bcrypt": "^3.0.0",
     "@types/multer": "^1.3.7",
-    "typescript": "^3.5.2"
   }
 }

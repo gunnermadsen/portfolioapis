@@ -10,8 +10,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
-// const pageRoutes = require('./app_server/routes/index');
-//const apiRoutes = require('./src/routes/index');
+
 const cors = require('cors');
 const morgan = require('morgan');
 // const UserController = require('./src/controllers/user.controller');
@@ -64,7 +63,7 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   res.status(500).json({ message: err });
-  //res.render('error');
+  res.render('error');
 });
 
 
