@@ -25,6 +25,13 @@ let db = new Database();
 
 const app = express();
 
+let mode: string = "";
+
+app.use((request: Request, response: Response, next: any) => {
+  mode = process.env.NODE_ENV === 'development' ? "http://localhost:3500" : "";
+  next();
+})
+
 app.use(cors());
 
 //app.use('/public', express.static(__dirname + '/app_api/controllers/repo'));
@@ -36,7 +43,7 @@ app.use(cookieParser());
 
 app.use((req: any, res: any, next: any) => {
   res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-  res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
@@ -62,5 +69,5 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 
 const httpServer = app.listen(3500, () => {
-  console.log("HTTP REST API server running at http://localhost:3500");
-});
+   console.log("HTTP REST API server running at " + mode);
+}); 
