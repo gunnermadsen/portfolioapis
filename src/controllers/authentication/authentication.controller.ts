@@ -1,13 +1,13 @@
 import { Request, Response, response } from 'express';
-import { User } from '../models/authentication.model';
+import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
 
 const UserModel = new User().getModelForClass(User);
 
-export class UserService {
+export class UserController {
     constructor() {}
 
-    static async login(request: Request, response: Response) {
+    public static async login(request: Request, response: Response) {
 
         const UserName = request.body.UserName;
         const Password = request.body.Password;
@@ -31,15 +31,15 @@ export class UserService {
         }
     }
 
-    static async getAll() {
+    public static async getAll() {
         return await UserModel.find().select('-hash');
     }
 
-    static async getById(id: string) {
+    public static async getById(id: string) {
         return await UserModel.findById(id).select('-hash');
     }
 
-    static async create(userParams: any) {
+    public static async create(userParams: any) {
         if (await UserModel.findOne({ UserName: userParams.UserName })) {
             throw userParams.UserName + ' is already taken';
         }
@@ -54,7 +54,7 @@ export class UserService {
         await user.save()
     }
 
-    static async update(id: string, userParams: any) {
+    public static async update(id: string, userParams: any) {
         const user = await UserModel.findById(id);
 
         if (!user) throw 'User not found';
@@ -72,7 +72,7 @@ export class UserService {
         await user.save();
     }
 
-    static async delete(id: string) {
+    public static async delete(id: string) {
         await UserModel.findByIdAndRemove(id);
     }
 

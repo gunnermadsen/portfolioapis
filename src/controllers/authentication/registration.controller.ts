@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User } from '../models/authentication.model';
+import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
 
 export async function register(request: Request, response: Response) {

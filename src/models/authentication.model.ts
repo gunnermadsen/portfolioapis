@@ -1,12 +1,8 @@
 import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from 'typegoose';
-
-import * as mongoose from 'mongoose';
 import * as crypto from 'crypto'
 // import { PropertyRead } from '@angular/compiler';
 import * as jwt from 'jsonwebtoken';
 
-import * as fs from 'fs';
-import { Database } from './db.connection';
 
 const util = require('util');
 // const RSA_PRIVATE_KEY = fs.readFileSync(__dirname + '/key/private.key');

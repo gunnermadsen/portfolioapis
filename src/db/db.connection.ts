@@ -12,9 +12,10 @@ export class Database {
     }
 
     _connect() {
+        const connectionString = process.env.MONGODB_URI || 'mongodb://heroku_cf279h4z:8tuqnuihu94nu4j3mdft4ku5pf@ds131676.mlab.com:31676/heroku_cf279h4z'
         mongoose
             .connect(
-                process.env.MONGODB_URI || 'mongodb://heroku_cf279h4z:8tuqnuihu94nu4j3mdft4ku5pf@ds131676.mlab.com:31676/heroku_cf279h4z',
+                connectionString,
                 //`${config.PROTOCOL}://${config.SERVER}:${config.PORT}/${config.DATABASE}`,
                 {
                     // "auth": { "authSource": "admin" },

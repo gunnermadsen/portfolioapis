@@ -14,11 +14,12 @@ const bodyParser = require('body-parser');
 //const apiRoutes = require('./src/routes/index');
 const cors = require('cors');
 const morgan = require('morgan');
-const userController = require('./src/controllers/user.controller');
+// const UserController = require('./src/controllers/user.controller');
 
-import { Database } from './src/models/db.connection';
+import * as AuthRoutes from './src/routes/authentication.router';
+import * as KitchenRoutes from './src/routes/mindful-meals.router';
 
-
+import { Database } from './src/db/db.connection';
 
 let db = new Database();
 
@@ -41,7 +42,8 @@ app.use((req: any, res: any, next: any) => {
 });
 
 // app.use('/', pageRoutes);
-app.use('/api', userController);
+app.use('/api/auth', AuthRoutes);
+app.use('/api/kitchen', KitchenRoutes);
 
 // catch 404 and forward to error handler
 app.use((req: any, res: any, next: any) => {
@@ -49,7 +51,7 @@ app.use((req: any, res: any, next: any) => {
 });
 
 // error handler
-app.use(function(err: any, req: any, res: any, next: any) {
+app.use((err: any, req: any, res: any, next: any) => {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
