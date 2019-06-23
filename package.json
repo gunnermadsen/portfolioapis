@@ -4,11 +4,14 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "build-ts": "tsc",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn app.ts",
-    "postinstall": "npm run build-ts",
-    "start": "ts-node app.ts",
-    "serve": "node dist/app.js"
+    "ts:watch": "tsc -w",
+    "ts:build": "tsc",
+    "serve": "nodemon dist/app.js",
+    "watch": "concurrently \"npm run ts:watch\" \"npm run serve\"",
+    "build": "npm run ts:build",
+    "prod:serve": "node dist/app.js",
+    "start": "npm run build && npm run prod:serve",
   },
   "engines": {
     "node": "10.11.0",
