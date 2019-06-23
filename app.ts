@@ -50,7 +50,6 @@ app.use((req: any, res: any, next: any) => {
 
 app.get('/', (request: any, response: any) => response.send('portfolio apis'));
 
-// app.use('/', pageRoutes);
 app.use('/api/auth', AuthRoutes);
 app.use('/api/kitchen', KitchenRoutes);
 
