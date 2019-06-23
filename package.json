@@ -4,7 +4,6 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn app.ts",
     "ts:watch": "tsc -w",
     "ts:build": "tsc",
     "serve": "nodemon dist/app.js",
