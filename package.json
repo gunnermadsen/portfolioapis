@@ -8,7 +8,7 @@
     "debug:server": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn app.ts",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
-    "serve": "node dist/server.js"
+    "serve": "node server.js"
   },
   "engines": {
     "node": "10.11.0"
