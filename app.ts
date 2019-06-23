@@ -3,7 +3,6 @@
 const dotenv = require('dotenv')
 dotenv.config();
 
-
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
@@ -26,8 +25,10 @@ const app = express();
 
 let mode: string = "";
 
+const PORT: number = 3000;
+
 app.use((request: Request, response: Response, next: any) => {
-  mode = process.env.NODE_ENV === 'development' ? "http://localhost:3500" : "";
+  mode = process.env.NODE_ENV === 'development' ? "http://localhost:3000" : "";
   next();
 })
 
@@ -46,6 +47,8 @@ app.use((req: any, res: any, next: any) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+
+app.get('/', (request: any, response: any) => response.send('portfolio apis'));
 
 // app.use('/', pageRoutes);
 app.use('/api/auth', AuthRoutes);
@@ -67,6 +70,4 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 
-const httpServer = app.listen(3500, () => {
-   console.log("HTTP REST API server running at " + mode);
-}); 
+app.listen(PORT, () => console.log(`HTTP RESTful service listening on ${PORT}`)); 
