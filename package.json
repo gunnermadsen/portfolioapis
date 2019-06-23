@@ -11,7 +11,8 @@
     "serve": "node dist/app.js"
   },
   "engines": {
-    "node": "10.11.0"
+    "node": "10.11.0",
+    "npm": "6.9.0"
   },
   "author": "gunner",
   "license": "MIT",
