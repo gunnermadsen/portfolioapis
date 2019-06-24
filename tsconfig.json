@@ -12,7 +12,7 @@
         "experimentalDecorators": true,
         "suppressImplicitAnyIndexErrors": true,
         "noImplicitAny": true,
-        "watch": true,
+        "watch": false,
         "skipLibCheck": true,
         "target": "es6",
         "typeRoots": [
