@@ -60,9 +60,10 @@ export class PortfolioServer extends Server {
     super.addControllers([userController]);
   }
 
-  public start(port: any): void {
-    this.app.listen(port, () => {
-      Logger.Info(`Server listening on port ${port}`);
+  public start(): void {
+    let listenPort = process.env.PORT || 3000;
+    this.app.listen(listenPort, () => {
+      Logger.Info(`Portfolioapis listening on port ${listenPort}`);
     })
   }
 }

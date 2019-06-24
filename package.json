@@ -4,7 +4,7 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "start": "node dist/start.js",
+    "start": "node start.js",
     "start-server": "ts-node ./start.ts",
     "postinstall": "tsc",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts"
