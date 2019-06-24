@@ -15,42 +15,49 @@ export class UserController {
     @Post('login')
     private async login(request: Request, response: Response) {
 
-        //Logger.Info(request.params.id);
-
         const UserName = request.body.UserName;
         const Password = request.body.Password;
 
         const user = await UserModel.findOne({ UserName });
+        try {
 
-        if (user) {
-            const hash = await user.validatePassword(Password);
-    
-            if (user.Hash === hash && user.UserName === UserName) {
-    
-                const { hash, ...userWithoutHash } = user.toObject();
-                const token = await user.generateSessionToken(user.id);
-    
-                response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
-    
-                let result: any = {
-                    Id: user.id,
-                    UserName: user.UserName,
-                    token: token
+            if (user) {
+
+                const hash = await user.validatePassword(Password)
+        
+                if (user.Hash === hash && user.UserName === UserName) {
+
+                    
+                        const { hash, ...userWithoutHash } = user.toObject();
+                        const token = await user.generateSessionToken(user.id).catch(error => { throw error });
+
+                        response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
+
+                        let result: any = {
+                            Id: user.id,
+                            UserName: user.UserName,
+                            Token: token
+                        }
+
+                        return response.status(200).json(result);
+
+                    
+        
+                } else {
+        
+                    return response.status(400).json({
+                        message: "Your username or password is incorrect"
+                    })
                 }
-    
-                return response.status(200).json(result);
-
             } else {
-    
-                return response.status(400).json({
-                    message: "Your username or password is incorrect"
+
+                return response.status(500).json({
+                    message: "An error occured when processing your request"
                 })
             }
-        } else {
             
-            return response.status(500).json({
-                message: "An error occured when processing your request"
-            })
+        } catch (error) {
+            return response.status(500).json(error);
         }
     }
     
