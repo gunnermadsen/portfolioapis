@@ -55,9 +55,9 @@ export class UserController {
                     message: "An error occured when processing your request"
                 })
             }
-            
+
         } catch (error) {
-            return response.status(500).json(error);
+            return response.status(500).json({ message: error });
         }
     }
     
