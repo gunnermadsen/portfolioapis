@@ -29,18 +29,18 @@ export class UserController {
                 if (user.Hash === hash && user.UserName === UserName) {
 
                     
-                        const { hash, ...userWithoutHash } = user.toObject();
-                        const token = await user.generateSessionToken(user.id).catch(error => { throw `Unable to get token: ${error || null}` });
+                    const { hash, ...userWithoutHash } = user.toObject();
+                    const token = await user.generateSessionToken(user.id).catch(error => { throw `Unable to get token: ${error || null}` });
 
-                        response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
+                    response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
 
-                        let result: any = {
-                            Id: user.id,
-                            UserName: user.UserName,
-                            Token: token
-                        }
+                    let result: any = {
+                        Id: user.id,
+                        UserName: user.UserName,
+                        Token: token
+                    }
 
-                        return response.status(200).json(result);
+                    return response.status(200).json(result);
 
                     
         
@@ -58,7 +58,7 @@ export class UserController {
             }
 
         } catch (error) {
-            return response.status(500).json({ message: "An error occured when processing your request", username: request.body.UserName, password: request.body.Password });
+            return response.status(500).json({ message: "An error occured when processing your request", username: request.body.UserName, password: request.body.Password, error: error });
         }
     }
     
