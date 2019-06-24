@@ -4,10 +4,10 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
-    "start-server": "ts-node ./start.ts",
     "start": "node dist/start.js",
-    "postinstall": "tsc"
+    "start-server": "ts-node ./start.ts",
+    "postinstall": "tsc",
+    "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts"
   },
   "engines": {
     "node": "10.11.0",
