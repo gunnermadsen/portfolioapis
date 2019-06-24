@@ -29,7 +29,7 @@ export class UserController {
 
                     
                         const { hash, ...userWithoutHash } = user.toObject();
-                        const token = await user.generateSessionToken(user.id).catch(error => { throw error });
+                        const token = await user.generateSessionToken(user.id).catch(error => { throw `Unable to get token: ${error || null}` });
 
                         response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
 
@@ -57,7 +57,7 @@ export class UserController {
             }
 
         } catch (error) {
-            return response.status(500).json({ message: error });
+            return response.status(500).json({ message: "An error occured when processing your request" });
         }
     }
     
