@@ -19,6 +19,7 @@ export class UserController {
         const Password = request.body.Password;
 
         const user = await UserModel.findOne({ UserName });
+
         try {
 
             if (user) {
@@ -57,7 +58,7 @@ export class UserController {
             }
 
         } catch (error) {
-            return response.status(500).json({ message: "An error occured when processing your request" });
+            return response.status(500).json({ message: "An error occured when processing your request", username: request.body.UserName, password: request.body.Password });
         }
     }
     
