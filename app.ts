@@ -1,72 +1,68 @@
-/* jshint esversion: 6 */
+import * as dotenv from 'dotenv';
 
-const dotenv = require('dotenv')
-dotenv.config();
+import * as createError from 'http-errors';
+import * as path from 'path';
+import * as express from 'express';
 
-const createError = require('http-errors');
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const bodyParser = require('body-parser');
+import customRouter from 'express-promise-router';
 
-const cors = require('cors');
-const morgan = require('morgan');
-// const UserController = require('./src/controllers/user.controller');
-
-import * as AuthRoutes from './src/routes/authentication.router';
-import * as KitchenRoutes from './src/routes/mindful-meals.router';
-
+import * as cookieParser from 'cookie-parser';
+import * as morgan from 'morgan';
+import * as bodyParser from 'body-parser';
+import * as cors from 'cors';
+import { Express, Request, Response, NextFunction } from 'express';
 import { Database } from './src/db/db.connection';
 
-let db = new Database();
+import { Server } from '@overnightjs/core';
+import { Logger } from '@overnightjs/logger';
+import { UserController } from './src/controllers/authentication/authentication.controller';
 
-const app = express();
+export class PortfolioServer extends Server {
 
-let mode: string = "";
+  constructor() {
 
-const PORT: number = 3000;
+    dotenv.config();
 
-app.use((request: Request, response: Response, next: any) => {
-  mode = process.env.NODE_ENV === 'development' ? "http://localhost:3000" : "";
-  next();
-})
+    super(process.env.NODE_ENV === 'development');
 
-app.use(cors());
+    this.app.use(bodyParser.json());
+    this.app.use(bodyParser.urlencoded({ extended: true }));
+    this.app.use(cors());
+    this.app.use(morgan('dev'));
+    this.app.use(cookieParser());
 
-//app.use('/public', express.static(__dirname + '/app_api/controllers/repo'));
+    this.app.use((request: Request, response: Response, next: NextFunction) => {
+      response.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
+      response.header("Access-Control-Allow-Origin", "*");
+      response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+      next();
+    });
 
-app.use(morgan('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+    // error handler
+    this.app.use((error: Error, request: Request, response: Response, next: NextFunction) => {
+      // set locals, only providing error in development
+      response.locals.message = error.message;
+      response.locals.error = request.app.get('env') === 'development' ? error : {};
+      response.status(500).json({ message: error });
+    });
 
-app.use((req: any, res: any, next: any) => {
-  res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+    
 
-app.get('/', (request: any, response: any) => response.send('portfolio apis'));
+    
+    this.setupControllers();
 
-app.use('/api/auth', AuthRoutes);
-app.use('/api/kitchen', KitchenRoutes);
+  }
 
-// catch 404 and forward to error handler
-app.use((req: any, res: any, next: any) => {
-  next(createError(404));
-});
+  private setupControllers(): void {
+    
+    const db = new Database();
+    let userController = new UserController();
+    super.addControllers([userController]);
+  }
 
-// error handler
-app.use((err: any, req: any, res: any, next: any) => {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(500).json({ message: err });
-  res.render('error');
-});
-
-
-app.listen(PORT, () => console.log(`HTTP RESTful service listening on ${PORT}`)); 
+  public start(port: any): void {
+    this.app.listen(port, () => {
+      Logger.Info(`Server listening on port ${port}`);
+    })
+  }
+}

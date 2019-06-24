@@ -28,17 +28,18 @@ export class User extends Typegoose {
         return this.Hash = Hash;
     }
 
-    @instanceMethod generateSessionToken(this: InstanceType<User>, userId: string) {
+    @instanceMethod generateSessionToken(this: InstanceType<User>, userId: string): string {
         let expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
 
-        return jwt.sign({
+        const token = jwt.sign({
             _id: this._id,
             email: this.getMaxListeners,
             name: this.eventNames,
             exp: Math.floor(expiry.getTime() / 1000)
         }, process.env.JWT_SECRET);
 
+        return token;
         // return signJwt({}, RSA_PRIVATE_KEY, {
         //     algorithm: 'RS256',
         //     expiresIn: 240,

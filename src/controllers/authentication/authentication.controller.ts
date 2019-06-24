@@ -2,46 +2,81 @@ import { Request, Response, response } from 'express';
 import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
 
+// import { OK, BAD_REQUEST } from 'http-status-codes';
+
+import { Controller, Middleware, Get, Post, Put, Delete } from '@overnightjs/core';
+import { Logger } from '@overnightjs/logger';
+
 const UserModel = new User().getModelForClass(User);
 
+@Controller('api/users') 
 export class UserController {
-    constructor() {}
 
-    public static async login(request: Request, response: Response) {
+    @Post('login')
+    private async login(request: Request, response: Response) {
+
+        //Logger.Info(request.params.id);
 
         const UserName = request.body.UserName;
         const Password = request.body.Password;
 
         const user = await UserModel.findOne({ UserName });
-        const hash = await user.validatePassword(Password);
 
-        if (user.Hash === hash && user.UserName === UserName) {
+        if (user) {
+            const hash = await user.validatePassword(Password);
+    
+            if (user.Hash === hash && user.UserName === UserName) {
+    
+                const { hash, ...userWithoutHash } = user.toObject();
+                const token = await user.generateSessionToken(user.id);
+    
+                response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
+    
+                let result: any = {
+                    Id: user.id,
+                    UserName: user.UserName,
+                    token: token
+                }
+    
+                return response.status(200).json(result);
 
-            const { hash, ...userWithoutHash } = user.toObject();
-            const token = await user.generateSessionToken(user.id);
-
-            response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false});
-
-            return {
-                ...userWithoutHash,
-                token
+            } else {
+    
+                return response.status(400).json({
+                    message: "Your username or password is incorrect"
+                })
             }
         } else {
-            throw { message: 'Your username or password is incorrect' };
+            
+            return response.status(500).json({
+                message: "An error occured when processing your request"
+            })
         }
     }
+    
 
-    public static async getAll() {
-        return await UserModel.find().select('-hash');
+    @Get('')
+    // @Middleware([middleware1, middleware2])
+    private async getAll(request: Request, response: Response) {
+        Logger.Info(request.body, true);
+        const user = await UserModel.find().select('-hash');
+
+        return response.status(200).json({...user})
     }
 
-    public static async getById(id: string) {
-        return await UserModel.findById(id).select('-hash');
+    @Get(':id')
+    private async getById(request: Request, response: Response, id: string) {
+        const user = await UserModel.findById(id).select('-hash');
+        return response.status(200).json({...user});
     }
 
-    public static async create(userParams: any) {
+
+    @Post('register')
+    private async create(userParams: any) {
         if (await UserModel.findOne({ UserName: userParams.UserName })) {
-            throw userParams.UserName + ' is already taken';
+            return response.status(400).json({
+                message: `${userParams.UserName} is already taken`
+            });
         }
 
         const user = new UserModel(userParams);
@@ -51,10 +86,18 @@ export class UserController {
             user.Hash = user.setPassword(userParams.Password);
         }
 
-        await user.save()
+        if (await user.save()) {
+            return response.status(200).json({
+                message: "Your account has been created successfully"
+            })
+        }
     }
 
-    public static async update(id: string, userParams: any) {
+
+    @Put('/:id')
+    private async update(request: Request, response: Response, id: string, userParams: any) {
+
+        Logger.Info(request.body);
         const user = await UserModel.findById(id);
 
         if (!user) throw 'User not found';
@@ -72,8 +115,10 @@ export class UserController {
         await user.save();
     }
 
-    public static async delete(id: string) {
+
+    @Delete('delete/:id')
+    private async delete(request: Request, response: Response, id: string) {
+        Logger.Info(request.params, true);
         await UserModel.findByIdAndRemove(id);
     }
-
 }
