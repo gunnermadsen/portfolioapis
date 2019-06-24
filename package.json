@@ -1,20 +1,24 @@
 {
   "name": "portfolioapi",
+  "author": "gunner",
+  "license": "MIT",
   "version": "1.0.0",
   "description": "",
   "main": "start.js",
   "scripts": {
-    "start": "node start.js",
+    "build-ts": "tsc",
+    "postinstall": "npm run build-ts",
+    "start": "npm run serve",
+    "serve": "node dist/start.js",
+    "watch-node": "nodemon dist/start.js",
+    "watch-ts": "tsc -w",
     "start-server": "ts-node ./start.ts",
-    "postinstall": "tsc",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts"
   },
   "engines": {
     "node": "10.11.0",
     "npm": "6.9.0"
   },
-  "author": "gunner",
-  "license": "MIT",
   "dependencies": {
     "@overnightjs/core": "^1.6.9",
     "@overnightjs/logger": "^1.1.9",
