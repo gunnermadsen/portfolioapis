@@ -58,7 +58,7 @@ export class PortfolioServer extends Server {
   }
 
   public start(): void {
-    let listenPort = process.env.PORT || 3000;
+    let listenPort = process.env.PORT || '3000';
     this.app.listen(listenPort, () => {
       Logger.Info(`Portfolioapis listening on port ${listenPort}`);
     })
