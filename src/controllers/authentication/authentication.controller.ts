@@ -27,7 +27,6 @@ export class UserController {
                 const hash = await user.validatePassword(Password)
         
                 if (user.Hash === hash && user.UserName === UserName) {
-
                     
                     const { hash, ...userWithoutHash } = user.toObject();
                     const token = await user.generateSessionToken(user.id).catch(error => { throw `Unable to get token: ${error || null}` });
@@ -40,21 +39,21 @@ export class UserController {
                         Token: token
                     }
 
-                    return response.status(200).json(result);
-
-                    
+                    return response.status(200).json({ account: result });
         
                 } else {
         
                     return response.status(400).json({
                         message: "Your username or password is incorrect"
                     })
+
                 }
             } else {
 
                 return response.status(500).json({
                     message: "An error occured when processing your request"
                 })
+                
             }
 
         } catch (error) {
@@ -80,24 +79,35 @@ export class UserController {
 
 
     @Post('register')
-    private async create(userParams: any) {
-        if (await UserModel.findOne({ UserName: userParams.UserName })) {
-            return response.status(400).json({
-                message: `${userParams.UserName} is already taken`
+    private async create(request: Request, response: Response) {
+
+        const UserName = request.body.UserName;
+        const Password = request.body.Password;
+
+        try {
+            if (await UserModel.findOne({ UserName: UserName })) {
+                return response.status(400).json({
+                    message: `${UserName} is already taken`
+                });
+            }
+
+            const user = new UserModel();
+
+            if (Password) {
+                //user.hash = bcrypt.hashSync(userParams.password, 10);
+                user.UserName = UserName;
+                user.Hash = user.setPassword(Password);
+            }
+
+            if (await user.save()) {
+                return response.status(200).json({
+                    message: "Your account has been created successfully"
+                })
+            }
+        } catch (error) {
+            return response.status(500).json({
+                message: `An error occured ${error}`
             });
-        }
-
-        const user = new UserModel(userParams);
-
-        if (userParams.Password) {
-            //user.hash = bcrypt.hashSync(userParams.password, 10);
-            user.Hash = user.setPassword(userParams.Password);
-        }
-
-        if (await user.save()) {
-            return response.status(200).json({
-                message: "Your account has been created successfully"
-            })
         }
     }
 

@@ -2,9 +2,7 @@ import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from 'typego
 import * as crypto from 'crypto'
 // import { PropertyRead } from '@angular/compiler';
 import * as jwt from 'jsonwebtoken';
-
-
-const util = require('util');
+import * as util from 'util';
 // const RSA_PRIVATE_KEY = fs.readFileSync(__dirname + '/key/private.key');
 // const RSA_PUBLIC_KEY = fs.readFileSync(__dirname + '/key/public.key');
 
@@ -14,29 +12,30 @@ export class User extends Typegoose {
     // @prop({ required: true }) firstname: string;
     // @prop({ required: true }) lastname: string;
     @prop({ unique: true, required: true }) 
-    UserName: string;
+    public UserName: string;
 
     @prop() 
-    Salt?: string;
-    
+    public Salt?: string;
+
     @prop() 
-    Hash?: string;
+    public Hash?: string;
 
     @instanceMethod 
-    setPassword(this: InstanceType<User>, Password: string) {
+    public setPassword(this: InstanceType<User>, Password: string) {
         this.Salt = crypto.randomBytes(16).toString('hex');
         this.Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
         return this.Hash;
     }
 
     @instanceMethod 
-    validatePassword(this: InstanceType<User>, Password: string) {
+    public validatePassword(this: InstanceType<User>, Password: string) {
         let Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
         return this.Hash = Hash;
     }
 
     @instanceMethod 
-    async generateSessionToken(this: InstanceType<User>, userId: string): Promise<string> {
+    public async generateSessionToken(this: InstanceType<User>, userId: string): Promise<string> {
+
         let expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
 
@@ -56,7 +55,7 @@ export class User extends Typegoose {
     }
 
     @instanceMethod 
-    verifySessionToken(this: InstanceType<User>, token: string) {
+    public verifySessionToken(this: InstanceType<User>, token: string) {
         let isValidToken = jwt.verify(token, process.env.JWT_SECRET)
     }
 }
