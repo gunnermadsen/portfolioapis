@@ -46,8 +46,7 @@ export class User extends Typegoose {
 
         const payload = {
             _id: this._id,
-            email: this.getMaxListeners,
-            name: this.eventNames,
+            email: this.UserName,
             exp: Math.floor(expiry.getTime() / 1000)
         }
 

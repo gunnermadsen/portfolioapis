@@ -17,10 +17,8 @@ const upload = multer({ dest: 'uploads/' });
 @ClassMiddleware(JwtInterceptor.checkJWTToken)
 export class RepositoryController {
 
-    @Get(':folder*?')
+    @Get('') //:folder*?
     private getFolderContents(request: Request, response: Response) {
-
-        //sendJSONResponse(res, 201, {"message": "operation successful"});
 
         let results: any[] = [];
         let filePath;
@@ -29,7 +27,11 @@ export class RepositoryController {
 
         const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path);
 
-        fs.readdir(cwd, (err: any, list: any) => {
+        fs.readdir(cwd, (error: any, list: any) => {
+
+            if (error) {
+                return response.status(404).json({ message: error })
+            }
 
             if (list.length == 0) {
                 results.push({
@@ -43,13 +45,19 @@ export class RepositoryController {
 
             var pending = list.length;
 
-            if (!pending) response.status(201).json(results);
+            if (!pending) {
+                return response.status(201).json(results);
+            }
 
             list.forEach((file: any, index: number) => {
 
                 filePath = path.resolve(cwd, file);
 
                 fs.stat(filePath, (err: any, stat: any) => {
+
+                    if (error) {
+                        return response.status(404).json({ message: err })
+                    }
 
                     results.push({
                         id: crypto.createHash('md5').update(file).digest('hex'),
@@ -62,18 +70,19 @@ export class RepositoryController {
                         path: path.join('/', dir, list[index]),
                         branch: dir.split("/"),
                         parent: dir.replace(/[^\/]*$/, '').slice(0, -1),
-                        selected: false,
-                        temp: ""
                     });
 
-                    if (!--pending) response.status(201).json(results);
+                    if (!--pending) {
+                        return response.status(201).json(results);
+                    }
+                    
                 });
             });
         });    
     }
 
 
-    @Post('/:folder*?/:data*?')
+    @Post('') // /:folder*?/:data*?
     private createNewFolder(request: Request, response: Response, id: string) {
         var cwd = path.join(__dirname, request.path, request.body.name);
         // req.body.name, req.path
