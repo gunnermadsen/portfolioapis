@@ -26,18 +26,26 @@ export class PortfolioServer extends Server {
 
     super(process.env.NODE_ENV === 'development');
 
+    this.app.disable('x-powered-by');
+
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
-    this.app.use(cors({ credentials: true }));
+    this.app.use(cors({
+      origin: ['http://localhost:4200', 'http://gunner-madsen.com'],
+      methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET'],
+      allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept',
+      credentials: true 
+    }));
+
     this.app.use(morgan('dev'));
     this.app.use(cookieParser());
 
-    this.app.use((request: Request, response: Response, next: NextFunction) => {
-      response.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-      response.header("Access-Control-Allow-Origin", "*"); //http://localhost:4200, http://gunner-madsen.com
-      response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-      next();
-    });
+    // this.app.use((request: Request, response: Response, next: NextFunction) => {
+    //   response.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
+    //   response.header("Access-Control-Allow-Origin", "*"); //http://localhost:4200, http://gunner-madsen.com
+    //   response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    //   next();
+    // });
 
     // error handler
     this.app.use((error: Error, request: Request, response: Response, next: NextFunction) => {
