@@ -34,7 +34,7 @@ export class PortfolioServer extends Server {
 
     this.app.use((request: Request, response: Response, next: NextFunction) => {
       response.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-      response.header("Access-Control-Allow-Origin", "http://localhost:4200, http://gunner-madsen.com");
+      response.header("Access-Control-Allow-Origin", "*"); //http://localhost:4200, http://gunner-madsen.com
       response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       next();
     });
