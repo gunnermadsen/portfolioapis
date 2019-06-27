@@ -1,4 +1,4 @@
-import { Request, Response, response } from 'express';
+import { Request, Response } from 'express';
 import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
 
@@ -29,14 +29,18 @@ export class UserController {
                 if (user.Hash === hash && user.UserName === UserName) {
                     
                     const { hash, ...userWithoutHash } = user.toObject();
-                    const token = await user.generateSessionToken(user.id).catch(error => { throw `Unable to get token: ${error || null}` });
+                    const token = await user.generateSessionToken().catch(error => { throw `Unable to get token: ${error || null}` });
+
+                    const csrfToken = await user.generateCsrfToken();
 
                     response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
+                    response.cookie("XSRF-TOKEN", csrfToken)
 
                     let result: any = {
                         Id: user.id,
                         UserName: user.UserName,
-                        Token: token
+                        Token: token,
+                        CSRFToken: csrfToken
                     }
 
                     return response.status(200).json({ account: result });

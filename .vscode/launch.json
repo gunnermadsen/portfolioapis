@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Server",
+            "name": "PortfolioAPIs: Debug Server",
             "type": "node",
             "request": "attach",
             "restart": true,

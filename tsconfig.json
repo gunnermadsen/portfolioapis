@@ -22,7 +22,14 @@
             "es2017",
             "dom"
         ],
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
         "baseUrl": "./",
-        "types": ["node"]
+        "types": [
+            "node"
+        ]
     }
 }

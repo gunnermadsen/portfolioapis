@@ -2,7 +2,7 @@ import * as express from 'express';
 import { Request, Response } from 'express';
 import * as multer from 'multer';
 
-import * as fsController from '../controllers/coolshare/repo';
+import * as fsController from '../controllers/coolshare/temp/repo';
 
 const router = express.Router();
 

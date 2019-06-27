@@ -16,6 +16,7 @@ import { Database } from './src/db/db.connection';
 import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { UserController } from './src/controllers/authentication/authentication.controller';
+import { RepositoryController } from './src/controllers/coolshare/repo.controller';
 
 export class PortfolioServer extends Server {
 
@@ -27,13 +28,13 @@ export class PortfolioServer extends Server {
 
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
-    this.app.use(cors());
+    this.app.use(cors({ credentials: true }));
     this.app.use(morgan('dev'));
     this.app.use(cookieParser());
 
     this.app.use((request: Request, response: Response, next: NextFunction) => {
       response.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
-      response.header("Access-Control-Allow-Origin", "*");
+      response.header("Access-Control-Allow-Origin", "http://localhost:4200, http://gunner-madsen.com");
       response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       next();
     });
@@ -53,8 +54,10 @@ export class PortfolioServer extends Server {
   private setupControllers(): void {
     
     const db = new Database();
+
     let userController = new UserController();
-    super.addControllers([userController]);
+    let repoController = new RepositoryController();
+    super.addControllers([userController, repoController]);
   }
 
   public start(): void {

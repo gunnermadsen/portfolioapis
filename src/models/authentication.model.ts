@@ -2,7 +2,12 @@ import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from 'typego
 import * as crypto from 'crypto'
 // import { PropertyRead } from '@angular/compiler';
 import * as jwt from 'jsonwebtoken';
+import * as fs from 'fs';
 import * as util from 'util';
+import { request, response } from 'express';
+
+const RSA_PUBLIC_KEY = fs.readFileSync('./.keys/public.key');
+const RSA_PRIVATE_KEY = fs.readFileSync('./.keys/private.key');
 // const RSA_PRIVATE_KEY = fs.readFileSync(__dirname + '/key/private.key');
 // const RSA_PUBLIC_KEY = fs.readFileSync(__dirname + '/key/public.key');
 
@@ -34,29 +39,33 @@ export class User extends Typegoose {
     }
 
     @instanceMethod 
-    public async generateSessionToken(this: InstanceType<User>, userId: string): Promise<string> {
+    public async generateSessionToken(this: InstanceType<User>): Promise<string> {
 
         let expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
 
-        const token = jwt.sign({
+        const payload = {
             _id: this._id,
             email: this.getMaxListeners,
             name: this.eventNames,
             exp: Math.floor(expiry.getTime() / 1000)
-        }, process.env.JWT_SECRET);
+        }
 
-        return await token;
-        // return signJwt({}, RSA_PRIVATE_KEY, {
-        //     algorithm: 'RS256',
-        //     expiresIn: 240,
-        //     subject: userId
-        // });
+        return await jwt.sign(payload, RSA_PRIVATE_KEY, { algorithm: 'RS256'});
     }
 
-    @instanceMethod 
-    public verifySessionToken(this: InstanceType<User>, token: string) {
-        let isValidToken = jwt.verify(token, process.env.JWT_SECRET)
+    @instanceMethod
+    public async verifySessionToken(this: InstanceType<User>, token: string) {
+
+        const payload = await jwt.verify(token, RSA_PUBLIC_KEY);
+        return payload;
+        
+    }
+
+    @instanceMethod
+    public async generateCsrfToken(this: InstanceType<User>) {
+        const payload = await crypto.randomBytes(32).toString('hex');
+        return payload;
     }
 }
 
