@@ -1,5 +1,7 @@
 {
     "compileOnSave": false,
+    
+    "exclude": ["dist"],
     "compilerOptions": {
         "outDir": "./dist",
         "sourceMap": true,
@@ -32,4 +34,5 @@
             "node"
         ]
     }
+    
 }
