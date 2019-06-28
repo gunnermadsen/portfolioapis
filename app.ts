@@ -31,7 +31,7 @@ export class PortfolioServer extends Server {
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
     this.app.use(cors({
-      origin: ['http://127.0.0.1:4200', 'https://coolshare.herokuapp.com'],
+      origin: ['http://localhost:4200', 'https://coolshare.herokuapp.com'],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET'],
       allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
       credentials: true 
