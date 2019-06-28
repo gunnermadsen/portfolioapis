@@ -17,7 +17,7 @@ const upload = multer({ dest: 'uploads/' });
 @ClassMiddleware(JwtInterceptor.checkJWTToken)
 export class RepositoryController {
 
-    @Get('') //:folder*?
+    @Post('') //:folder*?
     private getFolderContents(request: Request, response: Response) {
 
         let results: any[] = [];
@@ -82,7 +82,7 @@ export class RepositoryController {
     }
 
 
-    @Post('') // /:folder*?/:data*?
+    @Post('create') // /:folder*?/:data*?
     private createNewFolder(request: Request, response: Response, id: string) {
         var cwd = path.join(__dirname, request.path, request.body.name);
         // req.body.name, req.path
