@@ -73,7 +73,7 @@ export class RepositoryController {
                     });
 
                     if (!--pending) {
-                        return response.status(201).json(results);
+                        return response.status(200).json(results);
                     }
                     
                 });
