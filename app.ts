@@ -10,6 +10,8 @@ import * as cookieParser from 'cookie-parser';
 import * as morgan from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
+import * as multer from 'multer';
+
 import { Express, Request, Response, NextFunction } from 'express';
 import { Database } from './src/db/db.connection';
 
@@ -24,6 +26,8 @@ export class PortfolioServer extends Server {
 
     dotenv.config();
 
+    const upload = multer({ dest: 'uploads/' });
+
     super(process.env.NODE_ENV === 'development');
 
     this.app.disable('x-powered-by');
@@ -36,6 +40,8 @@ export class PortfolioServer extends Server {
       allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
       credentials: true 
     }));
+
+    this.app.use(upload.any());
 
     this.app.use(morgan('dev'));
     this.app.use(cookieParser());

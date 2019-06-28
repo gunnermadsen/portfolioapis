@@ -1,17 +1,15 @@
 import { Request, Response } from 'express';
 import * as multer from 'multer';
+import * as cmd from 'node-cmd';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as async from 'async';
 
 // import { OK, BAD_requestUEST } from 'http-status-codes';
 
-import { Controller, Get, Post, Put, Delete, ClassMiddleware } from '@overnightjs/core';
+import { Controller, Get, Post, Put, Delete, ClassMiddleware, Middleware } from '@overnightjs/core';
 import * as path from 'path';
 import { JwtInterceptor } from './middleware/jwt.interceptor';
-
-const upload = multer({ dest: 'uploads/' });
-
 
 @Controller('api/repo')
 @ClassMiddleware(JwtInterceptor.checkJWTToken)
@@ -65,11 +63,11 @@ export class RepositoryController {
                         type: (stat.isDirectory()) ? "Folder" : "File",
                         size: stat.size + " Bytes",
                         creationDate: stat.birthtime,
-                        cwd: '/' + dir.substring(dir.lastIndexOf("/") + 1),
-                        absPath: path.join('/', dir),
-                        path: path.join('/', dir, list[index]),
-                        branch: dir.split("/"),
-                        parent: dir.replace(/[^\/]*$/, '').slice(0, -1),
+                        cwd: request.body.path,
+                        //absPath: path.join('/', dir),
+                        path: path.join(request.body.path, list[index]),
+                        // branch: dir.split("/"),
+                        // parent: dir.replace(/[^\/]*$/, '').slice(0, -1),
                     });
 
                     if (!--pending) {
@@ -84,62 +82,78 @@ export class RepositoryController {
 
     @Post('create') // /:folder*?/:data*?
     private createNewFolder(request: Request, response: Response, id: string) {
+
         var cwd = path.join(__dirname, request.path, request.body.name);
-        // req.body.name, req.path
-        if (!fs.existsSync(cwd)) {
+
+        if (fs.existsSync(cwd)) {
+            return response.status(409).json({ message: "This folder name already exists" })
+        } 
+        else {
             //-rwxr-xr-x
             // owner: 7 - unlimited permissions as dir owner
             // group: 5 - limited write permissions in group
             // world: 5 - limited write permissions in world
             fs.mkdirSync(cwd, 0o755);
         }
+        
         this.getFolderContents(request, response);
     }
 
 
-    @Post('/')
+    @Post('upload')
     private uploadFile(request: Request, response: Response) {
 
-        var files = request.files;
+        const files = request.files;
+
+        let filename: string = "";
 
         async.each(files, (file: any, eachCallback: any) => {
             async.waterfall(
                 [
                     (callback: any) => {
+
+                        filename = file.filename;
+
                         fs.readFile(file.path, (err: any, data: any) => {
                             if (err) {
                                 return response.status(500).json(err);
-                            } else {
+                            } 
+                            else {
                                 callback(null, data);
                             }
                         });
                     },
 
                     (data: any, callback: any) => {
-                        var writepath = path.join(__dirname, request.body.path);
 
-                        //var fname = filename;
+                        const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path, file.originalname);
 
-                        fs.writeFile(writepath + '/' + file.originalname, data, (err: any) => {
+                        fs.writeFile(cwd, data, (err: any) => {
                             if (err) {
                                 return response.status(500).json(err);
-                            } else {
+                            } 
+                            else {
                                 callback(null, data);
                             }
                         });
+
                     }
+
                 ],
 
                 (err: any, result: any) => {
                     eachCallback();
-                })
-        }, (err: any) => {
+                }
+
+            )
+        }, 
+        (err: any) => {
             if (err) {
                 return response.status(500).json(err);
-            } else {
-                //cmd.run('rm -rf ./uploads');
+            } 
+            else {
                 this.getFolderContents(request, response);
-                //return sendJSONResponse(res, 201, { "message": "File upload successful" });
+                cmd.run('rm -rf ./uploads/*');
             }
         });
     }
