@@ -5,8 +5,6 @@ import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as async from 'async';
 
-// import { OK, BAD_requestUEST } from 'http-status-codes';
-
 import { Controller, Get, Post, Put, Delete, ClassMiddleware, Middleware } from '@overnightjs/core';
 import * as path from 'path';
 import { JwtInterceptor } from './middleware/jwt.interceptor';
@@ -16,14 +14,20 @@ import { JwtInterceptor } from './middleware/jwt.interceptor';
 export class RepositoryController {
 
     @Post('') //:folder*?
-    private getFolderContents(request: Request, response: Response) {
+    private getFolderContents(request: Request, response: Response, readPath?: any) {
 
         let results: any[] = [];
-        let filePath;
+        let urn: string = request.body.path;
+        let filePath: string;
+        let cwd: string;
+        // var dir = (request.path === "/") ? '/repo' : request.path;
 
-        var dir = (request.path === "/") ? '/repo' : request.path;
+        if (readPath && typeof readPath === 'string') {
+            cwd = path.join(__dirname, 'repository', request.body.id, readPath)
+        } else{
+            cwd = path.join(__dirname, 'repository', request.body.id, urn);
+        }
 
-        const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path);
 
         fs.readdir(cwd, (error: any, list: any) => {
 
@@ -32,13 +36,17 @@ export class RepositoryController {
             }
 
             if (list.length == 0) {
+                const name = "No Contents to Display";
+                let cwd = request.body.path.split('/');
+                cwd = '/' + cwd[cwd.length - 1];
                 results.push({
-                    name: "No Contents to Display",
-                    cwd: dir.substring(dir.lastIndexOf("/") + 1),
-                    parent: dir.replace(/[^\/]*$/, '').slice(0, -1),
-                    empty: true
+                    id: crypto.createHash('md5').update(name).digest('hex'),
+                    name: name,
+                    cwd: (typeof readPath === 'string') ? readPath : path.join(request.body.path),
+                    empty: true,
+                    path: path.join(request.body.path, '/')
                 });
-                return response.status(201).json(results);
+                return response.status(200).json(results);
             }
 
             var pending = list.length;
@@ -63,7 +71,8 @@ export class RepositoryController {
                         type: (stat.isDirectory()) ? "Folder" : "File",
                         size: stat.size + " Bytes",
                         creationDate: stat.birthtime,
-                        cwd: request.body.path,
+                        cwd: path.join(request.body.path),
+                        empty: false,
                         //absPath: path.join('/', dir),
                         path: path.join(request.body.path, list[index]),
                         // branch: dir.split("/"),
@@ -83,20 +92,23 @@ export class RepositoryController {
     @Post('create') // /:folder*?/:data*?
     private createNewFolder(request: Request, response: Response, id: string) {
 
-        var cwd = path.join(__dirname, request.path, request.body.name);
+        const directory = path.join(request.body.path, request.body.data.FolderName)
 
-        if (fs.existsSync(cwd)) {
-            return response.status(409).json({ message: "This folder name already exists" })
-        } 
-        else {
-            //-rwxr-xr-x
-            // owner: 7 - unlimited permissions as dir owner
-            // group: 5 - limited write permissions in group
-            // world: 5 - limited write permissions in world
-            fs.mkdirSync(cwd, 0o755);
-        }
-        
-        this.getFolderContents(request, response);
+        const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+
+        fs.exists(cwd, (exists: Boolean) => {
+            if (exists) {
+                return response.status(409).json({ message: "This folder name already exists" })
+            } 
+            else {
+                //-rwxr-xr-x
+                // owner: 7 - unlimited execution permissions as directory owner
+                // group: 5 - restrict write permissions in group
+                // world: 5 - restrict write permissions in world
+                fs.mkdirSync(cwd, 0o755);
+                this.getFolderContents(request, response, directory);
+            }
+        })
     }
 
 
@@ -105,14 +117,15 @@ export class RepositoryController {
 
         const files = request.files;
 
-        let filename: string = "";
+        if (!files) {
+            return response.status(404).json({ message: "No Files were present during upload" })
+        }
+
 
         async.each(files, (file: any, eachCallback: any) => {
             async.waterfall(
                 [
                     (callback: any) => {
-
-                        filename = file.filename;
 
                         fs.readFile(file.path, (err: any, data: any) => {
                             if (err) {
@@ -152,8 +165,8 @@ export class RepositoryController {
                 return response.status(500).json(err);
             } 
             else {
-                this.getFolderContents(request, response);
                 cmd.run('rm -rf ./uploads/*');
+                this.getFolderContents(request, response);
             }
         });
     }
