@@ -14,7 +14,7 @@
     "watch-ts": "tsc -w",
     "start-server": "ts-node ./start.ts",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
-    "cp": "cp -r src/controllers/coolshare/repository dist/src/controllers/coolshare"
+    "cp": "cp -r ~/src/controllers/coolshare/repository ~/dist/src/controllers/coolshare"
   },
   "engines": {
     "node": "10.11.0",
