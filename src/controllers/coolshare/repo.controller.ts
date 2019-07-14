@@ -67,12 +67,14 @@ export class RepositoryController {
 
                     results.push({
                         id: crypto.createHash('md5').update(file).digest('hex'),
+                        index: index,
                         name: file,
                         type: (stat.isDirectory()) ? "Folder" : "File",
                         size: stat.size + " Bytes",
                         creationDate: stat.birthtime,
                         cwd: path.join(request.body.path),
                         empty: false,
+                        isShared: false,
                         //absPath: path.join('/', dir),
                         path: path.join(request.body.path, list[index]),
                         // branch: dir.split("/"),
@@ -115,60 +117,81 @@ export class RepositoryController {
     @Post('upload')
     private uploadFile(request: Request, response: Response) {
 
-        const files = request.files;
+        const file = request.files[0];
 
-        if (!files) {
+        if (!file) {
             return response.status(404).json({ message: "No Files were present during upload" })
         }
 
+        async.parallel([
+            (callback: any) => {
 
-        async.each(files, (file: any, eachCallback: any) => {
-            async.waterfall(
-                [
-                    (callback: any) => {
-
-                        fs.readFile(file.path, (err: any, data: any) => {
-                            if (err) {
-                                return response.status(500).json(err);
-                            } 
-                            else {
-                                callback(null, data);
-                            }
-                        });
-                    },
-
-                    (data: any, callback: any) => {
-
-                        const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path, file.originalname);
-
-                        fs.writeFile(cwd, data, (err: any) => {
-                            if (err) {
-                                return response.status(500).json(err);
-                            } 
-                            else {
-                                callback(null, data);
-                            }
-                        });
-
+                fs.readFile(file.path, (err: any, data: any) => {
+                    if (err) {
+                        return response.status(500).json(err);
                     }
+                    else {
+                        callback(null, data);
+                    }
+                });
+            },
 
-                ],
+            (callback: any) => {
 
-                (err: any, result: any) => {
-                    eachCallback();
-                }
+                const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path, file.originalname);
 
-            )
-        }, 
-        (err: any) => {
+                fs.writeFile(cwd, file, (err: any) => {
+                    if (err) {
+                        return response.status(500).json(err);
+                    }
+                    else {
+                        callback(null, file);
+                    }
+                });
+
+            }
+
+        ],
+
+        (err: any, result: any) => {
+
             if (err) {
                 return response.status(500).json(err);
-            } 
+            }
             else {
                 cmd.run('rm -rf ./uploads/*');
-                this.getFolderContents(request, response);
+                return response.status(200).json({ message: "File Upload Successful" })
+                //this.getFolderContents(request, response);
             }
-        });
+        })
+    }
+
+
+    @Post('delete')
+    private deleteItem(request: Request, response: Response): Response | void {
+        const directory = path.join(request.body.path, request.body.name);
+
+        const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+
+        fs.unlink(cwd, (error: any) => {
+            if (error) {
+                return response.status(500).json({ error: error })
+            } else {
+                this.getFolderContents(request, response, request.body.path);
+            }
+        })
+    }
+
+    @Post('download')
+    private downloadItem(request: Request, response: Response): void {
+
+        if (request.body.name && request.body.id && request.body.path) {
+            const file = path.join(__dirname, 'repository', request.body.id, request.body.path, request.body.name);
+    
+            response.sendFile(file);
+        } else {
+            response.status(404).json({ message: 'The resource you requested could not be found', status: 404 })
+        }
     }
 
 }
