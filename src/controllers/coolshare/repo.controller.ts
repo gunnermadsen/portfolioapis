@@ -8,6 +8,7 @@ import * as async from 'async';
 import { Controller, Get, Post, Put, Delete, ClassMiddleware, Middleware } from '@overnightjs/core';
 import * as path from 'path';
 import { JwtInterceptor } from './middleware/jwt.interceptor';
+import { Http2ServerResponse } from 'http2';
 
 @Controller('api/repo')
 @ClassMiddleware(JwtInterceptor.checkJWTToken)
@@ -169,11 +170,24 @@ export class RepositoryController {
 
     @Post('delete')
     private deleteItem(request: Request, response: Response): Response | void {
-        const directory = path.join(request.body.path, request.body.name);
 
-        const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+        const files = request.body.items
 
-        fs.unlink(cwd, (error: any) => {
+        async.each(files, (file: any, callback: any) => {
+
+            const directory = path.join(request.body.path, file);
+
+            const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+
+            fs.unlink(cwd, (error: any) => {
+                if (error) {
+                    return response.status(500).json({ error: error })
+                } else {
+                    callback();
+                }
+            })
+        },
+        (error: any) => {
             if (error) {
                 return response.status(500).json({ error: error })
             } else {
