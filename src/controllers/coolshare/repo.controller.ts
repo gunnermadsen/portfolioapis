@@ -69,6 +69,8 @@ export class RepositoryController {
 
                 fs.stat(filePath, async (err: any, stat: any): Promise<Response> => {
 
+                    // let base = (!stat.isDirectory()) ? new Buffer(fs.readFileSync(path.join(cwd, file)).toString(), 'base64').toString('ascii') : false;
+
                     if (error) {
                         return response.status(404).json({ message: err })
                     }
@@ -79,6 +81,7 @@ export class RepositoryController {
                         id: crypto.createHash('md5').update(file).digest('hex'),
                         index: index,
                         name: file,
+                        // base64: base,
                         type: (stat.isDirectory()) ? "Folder" : "File",
                         size: stat.size + " Bytes",
                         creationDate: stat.birthtime,
