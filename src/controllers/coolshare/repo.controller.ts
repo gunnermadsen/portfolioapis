@@ -12,6 +12,23 @@ import { SharedFolders } from '../../models/shared-folder.model';
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
 
+export interface IShare {
+    UserName?: string;
+    ShareName: string;
+}
+
+
+export interface IPublicShare {
+    UserId: string;
+    Path: string;
+    Type: string;
+    ShareName: string;
+    UserName: string;
+    Invitees: string[]
+    Files: any;
+    CreatedOn: Date
+    EditedOn: Date
+}
 
 @Controller('api/repo')
 // @ClassMiddleware(JwtInterceptor.checkJWTToken)
@@ -30,10 +47,10 @@ export class RepositoryController {
 
         if (readPath && typeof readPath === 'string') {
             cwd = path.join(__dirname, 'repository', readPath)
-        } else{
+        } 
+        else {
             cwd = path.join(__dirname, 'repository', request.body.id, urn);
         }
-
 
         fs.readdir(cwd, (error: any, list: any[]) => {
 
@@ -51,7 +68,6 @@ export class RepositoryController {
                     name: name,
                     cwd: (typeof readPath === 'string') ? readPath : path.join(request.body.path),
                     empty: true,
-                    // path: path.join(request.body.path, '/')
                 });
 
                 return response.status(200).json({ content: results, userId: id });
@@ -74,28 +90,33 @@ export class RepositoryController {
                     if (error) {
                         return response.status(404).json({ message: err })
                     }
+                    
+                    let pathName = request.body.path ? request.body.path : request.body.shareName;
+                    let userName = request.body.userName ? request.body.userName : null;
 
-                    const sharedStatus = await this.getSharedStatus(file);
+                    let resource = userName ? pathName : file;
+                    
+                    const sharedStatus = await this.validateShareUri(resource, userName);
 
                     results.push({
                         id: crypto.createHash('md5').update(file).digest('hex'),
                         index: index,
                         name: file,
-                        // base64: base,
                         type: (stat.isDirectory()) ? "Folder" : "File",
                         size: stat.size + " Bytes",
                         creationDate: stat.birthtime,
-                        cwd: path.join(request.body.path),
+                        cwd: path.join('/', pathName),
                         empty: false,
                         isShared: sharedStatus.status,
-                        //absPath: path.join('/', dir),
-                        path: path.join(request.body.path, list[index]),
-                        // branch: dir.split("/"),
-                        // parent: dir.replace(/[^\/]*$/, '').slice(0, -1),
+                        path: path.join(pathName, list[index]),
                     });
 
                     if (!--pending) {
-                        return response.status(200).json({ content: results, userId: request.body.id });
+                        return response.status(200).json({ 
+                            content: results, 
+                            userId: request.body.id ? request.body.id : sharedStatus.data.UserId, 
+                            userName: userName 
+                        });
                     }
                     
                 });
@@ -117,9 +138,9 @@ export class RepositoryController {
             return response.status(400).json({ message: "The request was invalid" });
         }
 
-        const directory = path.join(request.body.id, request.body.path);
-        const cwd = path.join(__dirname, 'repository', directory, request.body.data.FolderName);
-        const folderData = request.body;
+        const directory: string = path.join(request.body.id, request.body.path);
+        const cwd: string = path.join(__dirname, 'repository', directory, request.body.data.FolderName);
+        const folderData: any = request.body;
 
         let permission: number = 0o755;
 
@@ -133,12 +154,16 @@ export class RepositoryController {
 
                     //let name: string = folderData.data.FolderName.replace(/ /g, '-');
 
-                    const folder: Object = {
-                        userId: folderData.id,
-                        path: directory,
-                        name: folderData.data.FolderName,
-                        invitees: folderData.data.Invitees,
-                        files: null,
+                    const folder: IPublicShare = {
+                        UserId: folderData.id,
+                        Path: directory,
+                        Type: folderData.data.Type,
+                        ShareName: folderData.data.FolderName,
+                        UserName: folderData.userName,
+                        Invitees: folderData.data.Invitees,
+                        Files: null,
+                        CreatedOn: new Date(),
+                        EditedOn: new Date()
                         //uri: `/${folderData.data.userName}/${name}`
                     }
 
@@ -169,7 +194,9 @@ export class RepositoryController {
         async.parallel([
             (callback: any) => {
 
-                fs.readFile(file.path, (err: any, data: any) => {
+                const uploads = path.join(__dirname, '..', '..', '..', file.path);
+
+                fs.readFile(uploads, (err: any, data: any) => {
                     if (err) {
                         return response.status(500).json(err);
                     }
@@ -181,7 +208,7 @@ export class RepositoryController {
 
             (callback: any) => {
 
-                const cwd = path.join(__dirname, 'repository', request.body.id, request.body.path, file.originalname);
+                const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, file.originalname);
 
                 fs.writeFile(cwd, file, (err: any) => {
                     if (err) {
@@ -260,13 +287,15 @@ export class RepositoryController {
 
     @Post('verify')
     private verifyLink(request: Request, response: Response) {
-        const uri = request.body.uri;
 
-        this.getSharedStatus(uri).then((share: any) => {
+        const shareName = request.body.shareName;
+        const userName = request.body.userName;
+
+        this.validateShareUri(shareName, userName).then((share: any) => {
             if (share.status) {
-                const folder = path.join(share.data.userId, share.data.name);
+                const folder = path.join(share.data.UserId, share.data.ShareName);
 
-                this.getFolderContents(request, response, folder, share.data.userId)
+                this.getFolderContents(request, response, folder, share.data.UserId)
             }
             else {
                 return response.status(404).json({ message: "We could not find the resource you specified" })
@@ -277,17 +306,30 @@ export class RepositoryController {
         
     }
 
-    private async getSharedStatus(name: string): Promise<any> {
+    private async validateShareUri(shareName: string, userName?: string): Promise<Response  | any> {
 
-        const share = await sharedFolderModel.findOne({ name: name });
+        try {
+            let resource: IShare = {
+                ShareName: shareName
+            }
 
-        const result: any = {
-            data: share,
-            status: (share) ? true : false
+            if (userName) {
+                resource.UserName = userName;
+            }
+
+            const share = await sharedFolderModel.findOne(resource);
+
+            const result: any = {
+                data: share,
+                status: (share) ? true : false
+            }
+
+            return result;
+
+        } catch (error) {
+            return response.status(400).json({ message: error });
         }
         
-        return result;
-
     }
 
 }

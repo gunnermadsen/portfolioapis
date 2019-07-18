@@ -96,6 +96,7 @@ export class UserController {
             user.Email = email;
             user.CreatedOn = new Date();
             user.EditedOn = new Date();
+            user.ProfilePicture = null;
 
             user.Hash = await user.setPassword(password);
 

@@ -12,8 +12,7 @@ const RSA_PRIVATE_KEY = fs.readFileSync('./.keys/private.key');
 export const signJwt = util.promisify(jwt.sign);
 
 export class User extends Typegoose {
-    // @prop({ required: true }) firstname: string;
-    // @prop({ required: true }) lastname: string;
+
     @prop({ unique: true, required: true }) 
     public UserName: string;
 
@@ -31,6 +30,9 @@ export class User extends Typegoose {
 
     @prop({ required: true, unique: true}) 
     public Hash: string;
+
+    @prop()
+    public ProfilePicture: string;
 
     @instanceMethod
     public setPassword(this: InstanceType<User>, Password: string) {
