@@ -1,7 +1,7 @@
 import { Request, Response, response } from 'express';
 import * as multer from 'multer';
 import * as cmd from 'node-cmd';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as crypto from 'crypto';
 import * as async from 'async';
 
@@ -229,7 +229,7 @@ export class RepositoryController {
                 return response.status(500).json(err);
             }
             else {
-                cmd.run('rm -rf ./uploads/*');
+                cmd.run(`rm -rf ./uploads/${file.filename}`);
                 return response.status(200).json({ message: "File Upload Successful" })
             }
         })
@@ -248,28 +248,54 @@ export class RepositoryController {
 
         const folder = path.join(request.body.id, request.body.path);
 
-        async.each(files, (file: any, callback: any) => {
+        try {
+            async.each(files, async (file: any, callback: any) => {
 
-            const directory = path.join(request.body.path, file);
+                const directory = path.join(request.body.path, file);
 
-            const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+                const cwd = path.join(__dirname, 'repository', request.body.id, directory);
 
-            fs.unlink(cwd, (error: any) => {
+                const share = await this.validateShareUri(file);
+
+                if (share) {
+                    await sharedFolderModel.deleteOne({ _id: request.body.id });
+                }
+
+                if (fs.lstatSync(cwd).isDirectory()) {
+
+                    fs.remove(cwd, (error: any) => {
+                        if (error) {
+                            return response.status(500).json({ error: error })
+                        }
+                        else {
+                            callback();
+                        }
+                    })
+                }
+                else {
+                    fs.unlink(cwd, (error: any) => {
+                        if (error) {
+                            return response.status(500).json({ error: error })
+                        } else {
+                            callback();
+                        }
+                    })
+                }
+            },
+            (error: any) => {
                 if (error) {
                     return response.status(500).json({ error: error })
                 } else {
-                    callback();
+
+                    //this.getFolderContents(request, response, folder);
+                    return response.status(201).json({ message: "Delete Operation Successful" });
                 }
             })
-        },
-        (error: any) => {
-            if (error) {
-                return response.status(500).json({ error: error })
-            } else {
-                
-                this.getFolderContents(request, response, folder);
-            }
-        })
+        } catch (error) {
+            return response.status(500).json({ message: error });
+        }
+
+        
     }
 
     @Post('download')
