@@ -11,7 +11,7 @@ module.exports = {
     target: 'node',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'server.[hash].js'
+        filename: 'server.js'
     },
     resolve: {
         extensions: [ '.ts', '.js' ]
