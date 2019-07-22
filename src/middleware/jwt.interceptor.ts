@@ -1,11 +1,11 @@
-import { User } from "../../../models/authentication.model";
+import { User } from "../models/authentication.model";
 import { Request, Response } from 'express';
-import { NextFunction } from "connect";
+import { NextFunction } from "express";
 
 const UserModel = new User().getModelForClass(User);
 
 export class JwtInterceptor {
-    public static checkJWTToken(request: Request, response: Response, next: NextFunction) {
+    public static async checkJWTToken(request: Request, response: Response, next: NextFunction) {
 
         let token = request.headers.authorization;
 
@@ -18,7 +18,7 @@ export class JwtInterceptor {
                 response.status(401).json({ message: "Invalid Token" })
             }
 
-            user.verifySessionToken(token)
+            await user.verifySessionToken(token)
                 .then((data: any) => {
                     response['user'] = data;
                     next();

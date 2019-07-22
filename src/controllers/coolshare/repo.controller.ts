@@ -7,7 +7,7 @@ import * as async from 'async';
 
 import { Controller, Post, ClassMiddleware, Middleware } from '@overnightjs/core';
 import * as path from 'path';
-import { JwtInterceptor } from './middleware/jwt.interceptor';
+import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { SharedFolders } from '../../models/shared-folder.model';
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);

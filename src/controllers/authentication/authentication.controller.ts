@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cmd from 'node-cmd';
-import { JwtInterceptor } from '../coolshare/middleware/jwt.interceptor';
+import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
 
 // import { OK, BAD_REQUEST } from 'http-status-codes';

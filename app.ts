@@ -4,6 +4,7 @@ import * as morgan from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as multer from 'multer';
+import * as compression from 'compression'
 
 import { Request, Response, NextFunction } from 'express';
 import { Database } from './src/db/db.connection';
@@ -12,6 +13,7 @@ import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { UserController } from './src/controllers/authentication/authentication.controller';
 import { RepositoryController } from './src/controllers/coolshare/repo.controller';
+import { CookbookController } from './src/controllers/mindful-meals/kitchen.controller';
 
 export class PortfolioServer extends Server {
 
@@ -20,17 +22,25 @@ export class PortfolioServer extends Server {
     dotenv.config();
 
     const upload = multer({ dest: 'uploads/' });
-
+    
     super(process.env.NODE_ENV === 'development');
-
+    
+    this.app.use(compression());
+    
     this.app.disable('x-powered-by');
 
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
+
     this.app.use(cors({
-      origin: ['http://localhost:4200', 'https://coolshare.herokuapp.com', 'https://shareily.com'],
+      origin: [
+        'http://localhost:4200', 
+        'https://coolshare.herokuapp.com', 
+        'https://shareily.com', 
+        'https://mindfulmeals.herokuapp.com'
+      ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET'],
-      allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-XSRF-TOKEN',
+      allowedHeaders: 'Origin, X-Requested-With, Accept-Encoding, Content-Type, Accept, Authorization, X-XSRF-TOKEN',
       credentials: true 
     }));
 
@@ -54,7 +64,9 @@ export class PortfolioServer extends Server {
 
     let userController = new UserController();
     let repoController = new RepositoryController();
-    super.addControllers([userController, repoController]);
+    let cookbookController = new CookbookController();
+
+    super.addControllers([ userController, repoController, cookbookController ]);
   }
 
   public start(): void {
