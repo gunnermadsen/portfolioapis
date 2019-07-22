@@ -15,8 +15,7 @@
     "start-server": "ts-node ./start.ts",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
     "copy-repo": "cp -r -v src/controllers/coolshare/repository dist/src/controllers/coolshare",
-    "copy-repo2": "cp -r -v src/controllers/coolshare/repository dist/coolshare",
-    "build": "webpack"
+    "copy-repo2": "cp -r -v src/controllers/coolshare/repository dist/coolshare"
   },
   "engines": {
     "node": "10.11.0",
