@@ -4,36 +4,39 @@ import { PantryCategories } from './pantry-categories.type';
 export class PantryItems extends Typegoose {
 
     @prop()
-    public Name: string;
+    public Name: String;
 
     @prop()
-    public Quantity: number;
+    public Quantity: Number;
 
     @prop()
-    public UserId: string;
+    public UserId: String;
 
     @prop()
     public ExpirationDate: Date;
 
     @prop()
-    public Category: string;
+    public Category: String;
 
     @prop()
-    public ExpirationStatus: string;
+    public ExpirationStatus: String;
 
     @prop()
-    public Calories: number;
+    public Calories: Number;
 
     @prop()
-    public ServingSize: number;
+    public ServingSize: Number;
 
     @prop()
-    public Tags: string[];
+    public Tags: String[];
 
     @prop()
     public CreatedOn: Date;
+
+    @prop()
+    public IsDeleted: Boolean;
     
-    // @prop()
-    // public EditedOn: Date;
+    @prop()
+    public UpdatedOn: Date;
 
 }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Recipes } from '../../models/cookbook.model';
-import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
+import { Controller, Post, ClassMiddleware, Middleware, Get, Put, Delete } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import * as crypto from 'crypto';
 import { PantryItems } from '../../models/pantry.model';
@@ -69,7 +69,7 @@ export class CookbookController {
 
     @Get('pantry')
     @Middleware(JwtInterceptor.checkJWTToken)
-    public async getPantryItemsById(request: Request, response: Response): Promise<any> {
+    public async getPantryItemsById(request: Request, response: Response): Promise<Response> {
 
         const userId: string = request.query.userId;
 
@@ -99,7 +99,7 @@ export class CookbookController {
 
     @Post('pantry')
     @Middleware(JwtInterceptor.checkJWTToken)
-    public async savePantryItem(request: Request, response: Response): Promise<any> {
+    public async savePantryItem(request: Request, response: Response): Promise<Response> {
 
         let pantryItem = request.body.item;
 
@@ -108,17 +108,71 @@ export class CookbookController {
         }
 
         try {
-            pantryItem.CreatedOn = new Date();
-            pantryItem.UpdatedOn = new Date();
 
             let pantry = await pantryModel.create(pantryItem);
 
             if (pantry) {
 
-                return response.status(200).json({ pantry: pantry });
+                return response.status(201).json({ message: "Your pantry item was saved successfully" });
             }
             else {
-                return response.status(404).json({ message: "You do not have any pantry items" });
+                return response.status(404).json({ message: "Your pantry item could not be added" });
+            }
+
+        } catch (error) {
+            return response.status(500).json({ error: error });
+        }
+
+    }
+
+    @Put('pantry')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    public async updatePantryItem(request: Request, response: Response): Promise<Response> {
+
+        let pantryItem = request.body.item;
+
+        if (!pantryItem) {
+            return response.status(401).json({ message: "We could not find the pantry item you are trying to update" })
+        }
+
+        try {
+
+            let pantry = await pantryModel.updateOne({ _id: pantryItem.id }, pantryItem.changes);
+
+            if (pantry.nModified === 1) {
+
+                return response.status(201).json({ message: "Your pantry item was saved successfully" });
+            }
+            else {
+                return response.status(404).json({ message: "Your pantry item could not be updated" });
+            }
+
+        } catch (error) {
+            return response.status(500).json({ error: error });
+        }
+
+    }
+
+    @Delete('pantry/:id')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    public async deletePantryItem(request: Request, response: Response): Promise<Response> {
+
+        let pantryItem = request.params.id;
+
+        if (!pantryItem) {
+            return response.status(401).json({ message: "We could not find the pantry item you are trying to delete" })
+        }
+
+        try {
+
+            let pantry: any = await pantryModel.deleteOne({ _id: pantryItem });
+
+            if (pantry.deletedCount === 1) {
+
+                return response.status(201).json({ message: "Your pantry item was deleted successfully" });
+            }
+            else {
+                return response.status(404).json({ message: "Your pantry item could not be deleted" });
             }
 
         } catch (error) {
