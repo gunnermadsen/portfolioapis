@@ -1,7 +1,7 @@
 {
     "compileOnSave": false,
     
-    "exclude": ["dist"],
+    "exclude": ["dist", "webpack.config.js", "temp"],
     "compilerOptions": {
         "outDir": "./dist",
         "sourceMap": true,

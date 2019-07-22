@@ -6,11 +6,11 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "build-ts": "npm run build && npm run copy-repo",
+    "build-ts": "tsc && npm run copy-repo",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
     "serve": "node dist/start.js",
-    "watch-node": "nodemon dist/server.js",
+    "watch-node": "nodemon dist/start.js",
     "watch-ts": "tsc -w",
     "start-server": "ts-node ./start.ts",
     "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
