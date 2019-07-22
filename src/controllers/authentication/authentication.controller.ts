@@ -84,7 +84,9 @@ export class UserController {
 
         try {
 
-            if (await UserModel.findOne({ UserName: userName, Email: email })) {
+            const duplicate = await UserModel.findOne({ UserName: userName, Email: email })
+
+            if (duplicate) {
                 return response.status(400).json({
                     message: `The username or email you provided is already taken`
                 });
@@ -100,7 +102,9 @@ export class UserController {
 
             user.Hash = await user.setPassword(password);
 
-            if (await user.save()) {
+            const result = await UserModel.create(user);
+
+            if (result) {
 
                 const cwd = path.join(__dirname, '..', 'coolshare', 'repository');
                 const directory = path.join(cwd, user.id);
