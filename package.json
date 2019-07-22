@@ -6,7 +6,7 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "build-ts": "npm run build && mkdir dist/coolshare && npm run copy-repo2",
+    "build-ts": "npm run build && npm run copy-repo",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
     "serve": "node dist/start.js",
