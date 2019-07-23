@@ -36,7 +36,7 @@ export class PortfolioServer extends Server {
       origin: [
         'http://localhost:4200', 
         'https://coolshare.herokuapp.com', 
-        'https://shareily.com', 
+        'https://www.shareily.com', 
         'https://mindfulmeals.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET'],
