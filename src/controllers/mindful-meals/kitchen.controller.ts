@@ -6,8 +6,8 @@ import * as crypto from 'crypto';
 import { PantryItems } from '../../models/pantry.model';
 
 
-const pantryModel = new PantryItems().getModelForClass(PantryItems);
-const recipesModel = new Recipes().getModelForClass(Recipes);
+let pantryModel = new PantryItems().getModelForClass(PantryItems);
+let recipesModel = new Recipes().getModelForClass(Recipes);
 
 @Controller('api/kitchen')
 export class CookbookController {
@@ -20,13 +20,14 @@ export class CookbookController {
 
         try {
 
-            let recipes = await recipesModel.find({}, null, { limit: 15 } );
+            let recipes = await recipesModel.find({}, null, { limit: 15 } ).lean();
 
             if (recipes) {
 
-                // recipes.map((recipe: any) => {
-                //     return recipe.id = this.generateId(recipe.Name);
-                // });
+                recipes.map((recipe: any) => {
+                    delete recipe._id;
+                    return recipe.id = this.generateId(recipe.label);
+                });
 
                 return response.status(200).json({ recipes: recipes });
             }
