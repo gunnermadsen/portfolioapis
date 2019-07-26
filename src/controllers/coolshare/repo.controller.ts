@@ -332,7 +332,7 @@ export class RepositoryController {
         
     }
 
-    private async validateShareUri(shareName: string, userName?: string): Promise<Response  | any> {
+    private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
 
         try {
             let resource: IShare = {
