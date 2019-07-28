@@ -229,7 +229,8 @@ export class RepositoryController {
                 return response.status(500).json(err);
             }
             else {
-                cmd.run(`rm -rf ./uploads/${file.filename}`);
+                const endpoint = path.resolve(__dirname, 'uploads', file.filename);
+                cmd.run(`rm -rf ./uploads/${endpoint}`);
                 return response.status(200).json({ message: "File Upload Successful" })
             }
         })
