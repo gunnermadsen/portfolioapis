@@ -42,14 +42,12 @@ export class UserController {
                     response.cookie("XSRF-TOKEN", csrfToken)
 
                     let result: any = {
-                        Id: user.id,
-                        UserName: user.UserName,
-                        Email: user.Email,
-                        Token: token,
-                        CSRFToken: csrfToken
+                        JWTToken: token,
+                        CSRFToken: csrfToken,
+                        Id: user.id
                     }
 
-                    return response.status(200).json({ account: result });
+                    return response.status(200).json(result);
         
                 } else {
         
@@ -96,6 +94,8 @@ export class UserController {
 
             user.UserName = userName;
             user.Email = email;
+            user.FirstName = null;
+            user.LastName = null;
             user.CreatedOn = new Date();
             user.EditedOn = new Date();
             user.ProfilePicture = null;

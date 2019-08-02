@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Recipes } from '../../models/cookbook.model';
-import { Controller, Post, ClassMiddleware, Middleware, Get, Put, Delete } from '@overnightjs/core';
+import { Controller, Post, ClassMiddleware, Middleware, Get, Put, Delete, Patch } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import * as crypto from 'crypto';
 import { PantryItems } from '../../models/pantry.model';
@@ -12,8 +12,6 @@ let recipesModel = new Recipes().getModelForClass(Recipes);
 @Controller('api/kitchen')
 export class CookbookController {
 
-    constructor() { }
-
     @Get('cookbook')
     @Middleware(JwtInterceptor.checkJWTToken)
     public async getAllRecipes(request: Request, response: Response): Promise<Response> {
@@ -22,6 +20,8 @@ export class CookbookController {
 
             let recipes = await recipesModel.find({}, null, { limit: 15 } ).lean();
 
+            let count = await recipesModel.count({});
+
             if (recipes) {
 
                 recipes.map((recipe: any) => {
@@ -29,7 +29,7 @@ export class CookbookController {
                     return recipe.id = this.generateId(recipe.label);
                 });
 
-                return response.status(200).json({ recipes: recipes });
+                return response.status(200).json({ recipes: recipes, count: count });
             }
             else {
                 return response.status(401);
@@ -64,7 +64,6 @@ export class CookbookController {
             return response.status(500).json({ error: error })
 
         }
-
 
     }
 
@@ -182,9 +181,30 @@ export class CookbookController {
 
     }
 
+    @Get('total')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    private async getNumberOfRecipesInUsersCookbook(request: Request, response: Response): Promise<Response> {
+        if (!request.body.id) {
+            return response.status(404).json({ message: "An Id is required"})
+        }
+
+        try {
+
+            let total = await recipesModel.count({});
+
+
+            return response.status(200).json({ data: total });
+
+        } catch (error) {
+
+            return response.status(500).json(error);
+
+        }
+    }
 
 
     private async checkExpirationStatus(pantry: any[]): Promise<any> {
+
         let now = new Date();
 
         return await pantry.map((item: any) => {
@@ -205,6 +225,8 @@ export class CookbookController {
             return item;
         });
     }
+
+
     private generateId(name: string): string {
         return crypto.createHash('md5').update(name).digest('hex');
     }

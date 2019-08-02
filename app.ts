@@ -14,6 +14,7 @@ import { Logger } from '@overnightjs/logger';
 import { UserController } from './src/controllers/authentication/authentication.controller';
 import { RepositoryController } from './src/controllers/coolshare/repo.controller';
 import { CookbookController } from './src/controllers/mindful-meals/kitchen.controller';
+import { AccountController } from './src/controllers/account/account.controller';
 
 export class PortfolioServer extends Server {
 
@@ -39,7 +40,7 @@ export class PortfolioServer extends Server {
         'https://www.shareily.com', 
         'https://mindfulmeals.herokuapp.com'
       ],
-      methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET'],
+      methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
       allowedHeaders: 'Origin, X-Requested-With, Accept-Encoding, Content-Type, Accept, Authorization, X-XSRF-TOKEN',
       credentials: true 
     }));
@@ -65,8 +66,9 @@ export class PortfolioServer extends Server {
     let userController = new UserController();
     let repoController = new RepositoryController();
     let cookbookController = new CookbookController();
+    let accountController = new AccountController();
 
-    super.addControllers([ userController, repoController, cookbookController ]);
+    super.addControllers([ userController, repoController, cookbookController, accountController ]);
   }
 
   public start(): void {

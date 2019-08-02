@@ -16,6 +16,12 @@ export class User extends Typegoose {
     @prop({ unique: true, required: true }) 
     public UserName: string;
 
+    @prop() 
+    public FirstName: string;
+
+    @prop() 
+    public LastName: string;
+
     @prop({ unique: true, required: true })
     public Email: string;
 

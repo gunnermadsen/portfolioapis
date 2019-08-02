@@ -6,7 +6,7 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "build-ts": "tsc && npm run copy-repo && npm run make-upload-dir",
+    "build-ts": "rm -rf dist/* && tsc && npm run copy-repo && npm run make-upload-dir",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
     "serve": "node dist/start.js",
