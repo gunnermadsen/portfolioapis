@@ -49,7 +49,7 @@ export class RepositoryController {
             cwd = path.join(__dirname, 'repository', readPath)
         } 
         else {
-            cwd = path.join(__dirname, 'repository', request.body.id, urn);
+            cwd = path.join(__dirname, 'repository', response['user']._id, urn);
         }
 
         fs.readdir(cwd, (error: any, list: any[]) => {
@@ -61,7 +61,7 @@ export class RepositoryController {
             if (list.length == 0) {
 
                 const name = "No Contents to Display";
-                let id: string = (userId) ? userId : request.body.id;
+                let id: string = (userId) ? userId : response['user']._id;
 
                 results.push({
                     id: crypto.createHash('md5').update(name).digest('hex'),
@@ -114,7 +114,7 @@ export class RepositoryController {
                     if (!--pending) {
                         return response.status(200).json({ 
                             content: results, 
-                            userId: request.body.id ? request.body.id : sharedStatus.data.UserId, 
+                            userId: response['user']._id, 
                             userName: userName 
                         });
                     }
@@ -134,11 +134,11 @@ export class RepositoryController {
         // group: 5 - restrict write permissions in group
         // world: 5 - restrict write permissions in world
 
-        if (!request.body.id && !request.body.path) { // && !folderData.data.userName
+        if (!response['user']._id && !request.body.path) { // && !folderData.data.userName
             return response.status(400).json({ message: "The request was invalid" });
         }
 
-        const directory: string = path.join(request.body.id, request.body.path);
+        const directory: string = path.join(response['user']._id, request.body.path);
         const cwd: string = path.join(__dirname, 'repository', directory, request.body.data.FolderName);
         const folderData: any = request.body;
 
@@ -183,15 +183,16 @@ export class RepositoryController {
 
     @Post('upload')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private uploadFile(request: Request, response: Response): Response {
+    private async uploadFile(request: Request, response: Response): Promise<Response> {
 
         const file = request.files[0];
+        const userId = response['user']._id;
 
         if (!file) {
             return response.status(404).json({ message: "No Files were present during upload" })
         }
 
-        async.parallel([
+        await async.parallel([
             (callback: any) => {
 
                 const uploads = path.join(__dirname, '..', '..', '..', file.path);
@@ -208,7 +209,7 @@ export class RepositoryController {
 
             (callback: any) => {
 
-                const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, file.originalname);
+                const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
                 fs.writeFile(cwd, file, (err: any) => {
                     if (err) {
@@ -223,15 +224,15 @@ export class RepositoryController {
 
         ],
 
-        (err: any, result: any) => {
+        (err: any, result: any): Response | void => {
 
             if (err) {
                 return response.status(500).json(err);
             }
             else {
-                const endpoint = path.resolve(__dirname, 'uploads', file.filename);
-                cmd.run(`rm -rf ./uploads/${endpoint}`);
-                return response.status(200).json({ message: "File Upload Successful" })
+                // const endpoint = path.resolve(__dirname, 'uploads', file.filename);
+                cmd.run(`rm -rf ./uploads/*`);
+                return response.status(204).end();
             }
         })
     }
@@ -247,19 +248,19 @@ export class RepositoryController {
             return response.status(400).json({ message: "Bad Request" });
         }
 
-        const folder = path.join(request.body.id, request.body.path);
+        const folder = path.join(response['user']._id, request.body.path);
 
         try {
             async.each(files, async (file: any, callback: any) => {
 
                 const directory = path.join(request.body.path, file);
 
-                const cwd = path.join(__dirname, 'repository', request.body.id, directory);
+                const cwd = path.join(__dirname, 'repository', response['user']._id, directory);
 
                 const share = await this.validateShareUri(file);
 
                 if (share) {
-                    await sharedFolderModel.deleteOne({ _id: request.body.id });
+                    await sharedFolderModel.deleteOne({ _id: response['user']._id });
                 }
 
                 if (fs.lstatSync(cwd).isDirectory()) {
@@ -303,8 +304,8 @@ export class RepositoryController {
     @Middleware(JwtInterceptor.checkJWTToken)
     private downloadItem(request: Request, response: Response) {
 
-        if (request.body.name && request.body.id && request.body.path) {
-            const file = path.join(__dirname, 'repository', request.body.id, request.body.path, request.body.name);
+        if (request.body.name && response['user']._id && request.body.path) {
+            const file = path.join(__dirname, 'repository', response['user']._id, request.body.path, request.body.name);
     
             response.sendFile(file);
         } else {
