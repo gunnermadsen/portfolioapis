@@ -5,10 +5,13 @@ import * as fs from 'fs-extra';
 import * as crypto from 'crypto';
 import * as async from 'async';
 
-import { Controller, Post, ClassMiddleware, Middleware } from '@overnightjs/core';
+import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
 import * as path from 'path';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { SharedFolders } from '../../models/shared-folder.model';
+
+import * as mime from 'mime';
+import { NextFunction } from 'connect';
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
 
@@ -37,9 +40,11 @@ export class RepositoryController {
 
     @Post('') //:folder*?
     @Middleware(JwtInterceptor.checkJWTToken)
-    private getFolderContents(request: Request, response: Response, readPath?: any, userId?: any) {
+    private getFolderContents(request: Request, response: Response, readPath?: any) {
 
         let results: any[] = [];
+
+        let userId = response['user']._id;
 
         let urn: string = request.body.path;
         let filePath: string;
@@ -49,7 +54,7 @@ export class RepositoryController {
             cwd = path.join(__dirname, 'repository', readPath)
         } 
         else {
-            cwd = path.join(__dirname, 'repository', response['user']._id, urn);
+            cwd = path.join(__dirname, 'repository', userId, urn);
         }
 
         fs.readdir(cwd, (error: any, list: any[]) => {
@@ -61,7 +66,6 @@ export class RepositoryController {
             if (list.length == 0) {
 
                 const name = "No Contents to Display";
-                let id: string = (userId) ? userId : response['user']._id;
 
                 results.push({
                     id: crypto.createHash('md5').update(name).digest('hex'),
@@ -70,7 +74,7 @@ export class RepositoryController {
                     empty: true,
                 });
 
-                return response.status(200).json({ content: results, userId: id });
+                return response.status(200).json({ content: results, userId: userId });
             }
 
             let pending = list.length;
@@ -114,7 +118,7 @@ export class RepositoryController {
                     if (!--pending) {
                         return response.status(200).json({ 
                             content: results, 
-                            userId: response['user']._id, 
+                            userId: userId, 
                             userName: userName 
                         });
                     }
@@ -134,11 +138,13 @@ export class RepositoryController {
         // group: 5 - restrict write permissions in group
         // world: 5 - restrict write permissions in world
 
-        if (!response['user']._id && !request.body.path) { // && !folderData.data.userName
+        const userId = response['user']._id;
+
+        if (!userId && !request.body.path) { // && !folderData.data.userName
             return response.status(400).json({ message: "The request was invalid" });
         }
 
-        const directory: string = path.join(response['user']._id, request.body.path);
+        const directory: string = path.join(userId, request.body.path);
         const cwd: string = path.join(__dirname, 'repository', directory, request.body.data.FolderName);
         const folderData: any = request.body;
 
@@ -183,7 +189,7 @@ export class RepositoryController {
 
     @Post('upload')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async uploadFile(request: Request, response: Response): Promise<Response> {
+    private uploadFile(request: Request, response: Response): Response {
 
         const file = request.files[0];
         const userId = response['user']._id;
@@ -192,14 +198,14 @@ export class RepositoryController {
             return response.status(404).json({ message: "No Files were present during upload" })
         }
 
-        await async.parallel([
+        async.parallel([
             (callback: any) => {
 
                 const uploads = path.join(__dirname, '..', '..', '..', file.path);
 
-                fs.readFile(uploads, (err: any, data: any) => {
-                    if (err) {
-                        return response.status(500).json(err);
+                fs.readFile(uploads, (error: any, data: any) => {
+                    if (error) {
+                        return response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
                     }
                     else {
                         callback(null, data);
@@ -211,9 +217,9 @@ export class RepositoryController {
 
                 const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
-                fs.writeFile(cwd, file, (err: any) => {
-                    if (err) {
-                        return response.status(500).json(err);
+                fs.writeFile(cwd, file, (error: any) => {
+                    if (error) {
+                        return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error});
                     }
                     else {
                         callback(null, file);
@@ -224,14 +230,14 @@ export class RepositoryController {
 
         ],
 
-        (err: any, result: any): Response | void => {
+        (error: any, result: any): Response | void => {
 
-            if (err) {
-                return response.status(500).json(err);
+            if (error) {
+                return response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
             }
             else {
                 // const endpoint = path.resolve(__dirname, 'uploads', file.filename);
-                cmd.run(`rm -rf ./uploads/*`);
+                cmd.run(`rm -rf ./uploads/${file.filename}`);
                 return response.status(204).end();
             }
         })
@@ -244,23 +250,25 @@ export class RepositoryController {
 
         const files = request.body.items;
 
+        const userId = response['user']._id;
+
         if (!files) {
             return response.status(400).json({ message: "Bad Request" });
         }
 
-        const folder = path.join(response['user']._id, request.body.path);
+        const folder = path.join(userId, request.body.path);
 
         try {
             async.each(files, async (file: any, callback: any) => {
 
                 const directory = path.join(request.body.path, file);
 
-                const cwd = path.join(__dirname, 'repository', response['user']._id, directory);
+                const cwd = path.join(__dirname, 'repository', userId, directory);
 
                 const share = await this.validateShareUri(file);
 
-                if (share) {
-                    await sharedFolderModel.deleteOne({ _id: response['user']._id });
+                if (share.status) {
+                    await sharedFolderModel.deleteOne({ _id: userId });
                 }
 
                 if (fs.lstatSync(cwd).isDirectory()) {
@@ -300,17 +308,20 @@ export class RepositoryController {
         
     }
 
-    @Post('download')
-    @Middleware(JwtInterceptor.checkJWTToken)
-    private downloadItem(request: Request, response: Response) {
+    @Get('download')
+    // @Middleware(JwtInterceptor.checkJWTToken)
+    private downloadItem(request: Request, response: Response, next: NextFunction) {
 
-        if (request.body.name && response['user']._id && request.body.path) {
-            const file = path.join(__dirname, 'repository', response['user']._id, request.body.path, request.body.name);
-    
-            response.sendFile(file);
-        } else {
-            response.status(404).json({ message: 'The resource you requested could not be found', status: 404 })
-        }
+        const location = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource);
+
+        const mimeType = mime.getType(request.query.resource);
+
+        response.setHeader('Content-Type', mimeType);
+        response.setHeader('Content-Transfer-Encoding', 'binary');
+        response.setHeader('Content-disposition', `attachment; filename=${request.query.resource}`);
+
+        response.download(location);
+                
     }
 
     @Post('verify')
@@ -323,12 +334,15 @@ export class RepositoryController {
             if (share.status) {
                 const folder = path.join(share.data.UserId, share.data.ShareName);
 
-                this.getFolderContents(request, response, folder, share.data.UserId)
+                response['user']._id = share.data.UserId;
+
+                this.getFolderContents(request, response, folder)
             }
             else {
                 return response.status(404).json({ message: "We could not find the resource you specified" })
             }
-        }).catch(error => {
+        })
+        .catch(error => {
             return response.status(500).json({ message: error });
         });
         
@@ -361,3 +375,22 @@ export class RepositoryController {
     }
 
 }
+
+
+
+
+
+
+
+// let fileName = path.basename(file);
+
+// let mimeType = mime.getType(file);
+
+// response.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+// response.setHeader('Content-type', mimeType);
+
+// let filestream = fs.createReadStream(file);
+
+// filestream.pipe(response);
+
+// return response.sendFile(file)

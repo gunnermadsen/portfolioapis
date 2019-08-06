@@ -5,9 +5,13 @@ import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as multer from 'multer';
 import * as compression from 'compression'
+import * as express from 'express';
+
+import * as path from 'path';
 
 import { Request, Response, NextFunction } from 'express';
 import { Database } from './src/db/db.connection';
+
 
 import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
@@ -26,7 +30,9 @@ export class PortfolioServer extends Server {
     
     super(process.env.NODE_ENV === 'development');
     
-    this.app.use(compression());
+    // this.app.use(compression());
+
+    // this.app.use('/static', express.static(path.join(__dirname, 'src/controllers/coolshare/repository')));
     
     this.app.disable('x-powered-by');
 
@@ -35,13 +41,15 @@ export class PortfolioServer extends Server {
 
     this.app.use(cors({
       origin: [
-        'http://localhost:4200', 
-        'https://coolshare.herokuapp.com', 
-        'https://www.shareily.com', 
+        'http://localhost:4200',
+        'http://www.gunner-madsen.com',
+        'https://gunner-madsen.com',
+        'https://coolshare.herokuapp.com',
+        'https://www.shareily.com',
         'https://mindfulmeals.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
-      allowedHeaders: 'Origin, X-Requested-With, Accept-Encoding, Content-Type, Accept, Authorization, X-XSRF-TOKEN',
+      allowedHeaders: ['Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'],
       credentials: true 
     }));
 
