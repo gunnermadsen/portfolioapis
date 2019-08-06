@@ -1,1 +1,1 @@
-web: node --debug=9090 dist/start.js
+web: node --inspect=9090 dist/start.js
