@@ -27,6 +27,17 @@
             "outFiles": [
                 "${workspaceFolder}/bin/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to Process",
+            "address": "localhost",
+            "restart": false,
+            "sourceMaps": false,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": null,
+            "port": 9090
         }
     ]
 }
