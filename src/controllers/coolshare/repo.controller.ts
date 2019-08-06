@@ -199,7 +199,7 @@ export class RepositoryController {
         }
 
         async.parallel([
-            (callback: any) => {
+            async.reflect((callback: any) => {
 
                 const uploads = path.join(__dirname, '..', '..', '..', file.path);
 
@@ -211,9 +211,9 @@ export class RepositoryController {
                         callback(null, data);
                     }
                 });
-            },
+            }),
 
-            (callback: any) => {
+            async.reflect((callback: any) => {
 
                 const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
@@ -226,7 +226,7 @@ export class RepositoryController {
                     }
                 });
 
-            }
+            })
 
         ],
 
@@ -237,7 +237,7 @@ export class RepositoryController {
             }
             else {
                 // const endpoint = path.resolve(__dirname, 'uploads', file.filename);
-                // cmd.run(`rm -rf ./uploads/${result[1].filename}`);
+                cmd.run(`rm -rf ./uploads/${result[1].value.filename}`);
                 return response.status(204).end();
             }
         })
