@@ -237,7 +237,7 @@ export class RepositoryController {
             }
             else {
                 // const endpoint = path.resolve(__dirname, 'uploads', file.filename);
-                cmd.run(`rm -rf ./uploads/${result[1].filename}`);
+                // cmd.run(`rm -rf ./uploads/${result[1].filename}`);
                 return response.status(204).end();
             }
         })
