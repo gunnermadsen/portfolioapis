@@ -189,13 +189,13 @@ export class RepositoryController {
 
     @Post('upload')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private uploadFile(request: Request, response: Response): Response {
+    private uploadFile(request: Request, response: Response): void {
 
         const userId = response['user']._id;
         const file = request.files[0];
 
         if (!file) {
-            return response.status(404).json({ message: "No Files were present during upload" })
+            response.status(404).json({ message: "No Files were present during upload" })
         }
 
         async.parallel([
@@ -205,7 +205,7 @@ export class RepositoryController {
 
                 fs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
-                        return response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
+                        response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
                     }
                     else {
                         callback(null, data);
@@ -220,18 +220,18 @@ export class RepositoryController {
             const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
             if (error) {
-                return response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
+                response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
             }
             else {
                 fs.writeFile(cwd, result[0].value, (error: any) => {
                     if (error) {
-                        return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
+                        response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                     }
                     else {
                         const filename = file.originalname.replace(/ /g, '\\\ ');
                         const command = `rm -rf ./uploads/${filename}`;
                         cmd.run(command);
-                        return response.status(204).end();
+                        response.status(204).end();
                     }
                 })
             }
