@@ -191,8 +191,8 @@ export class RepositoryController {
     @Middleware(JwtInterceptor.checkJWTToken)
     private uploadFile(request: Request, response: Response): Response {
 
-        const file = request.files[0];
         const userId = response['user']._id;
+        const file = request.files[0];
 
         if (!file) {
             return response.status(404).json({ message: "No Files were present during upload" })
@@ -211,13 +211,14 @@ export class RepositoryController {
                         callback(null, data);
                     }
                 });
+
             }),
         ],
 
         (error: any, result: any): Response | void => {
 
             const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
-            
+
             if (error) {
                 return response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
             }
@@ -227,7 +228,9 @@ export class RepositoryController {
                         return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                     }
                     else {
-                        cmd.run(`rm -rf ./uploads/${file.originalname}`);
+                        const filename = file.originalname.replace(/ /g, '\\\ ');
+                        const command = `rm -rf ./uploads/${filename}`;
+                        cmd.run(command);
                         return response.status(204).end();
                     }
                 })
