@@ -212,33 +212,25 @@ export class RepositoryController {
                     }
                 });
             }),
-
-            async.reflect((callback: any) => {
-
-                const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
-
-                fs.writeFile(cwd, file, (error: any) => {
-                    if (error) {
-                        return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error});
-                    }
-                    else {
-                        callback(null, file);
-                    }
-                });
-
-            })
-
         ],
 
         (error: any, result: any): Response | void => {
 
+            const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
+            
             if (error) {
                 return response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
             }
             else {
-                // const endpoint = path.resolve(__dirname, 'uploads', file.filename);
-                cmd.run(`rm -rf ./uploads/${result[1].value.filename}`);
-                return response.status(204).end();
+                fs.writeFile(cwd, result[0].value, (error: any) => {
+                    if (error) {
+                        return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
+                    }
+                    else {
+                        cmd.run(`rm -rf ./uploads/${file.originalname}`);
+                        return response.status(204).end();
+                    }
+                })
             }
         })
     }
@@ -312,7 +304,7 @@ export class RepositoryController {
     // @Middleware(JwtInterceptor.checkJWTToken)
     private downloadItem(request: Request, response: Response, next: NextFunction) {
 
-        const location = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource);
+        const dir = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource);
 
         const mimeType = mime.getType(request.query.resource);
 
@@ -320,7 +312,7 @@ export class RepositoryController {
         response.setHeader('Content-Transfer-Encoding', 'binary');
         response.setHeader('Content-disposition', `attachment; filename=${request.query.resource}`);
 
-        response.download(location);
+        response.download(dir);
                 
     }
 
@@ -375,22 +367,3 @@ export class RepositoryController {
     }
 
 }
-
-
-
-
-
-
-
-// let fileName = path.basename(file);
-
-// let mimeType = mime.getType(file);
-
-// response.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-// response.setHeader('Content-type', mimeType);
-
-// let filestream = fs.createReadStream(file);
-
-// filestream.pipe(response);
-
-// return response.sendFile(file)
