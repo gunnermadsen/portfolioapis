@@ -199,7 +199,7 @@ export class RepositoryController {
         }
 
         async.parallel([
-            async.reflect((callback: any) => {
+            (callback: any) => {
 
                 const uploads = path.resolve(file.path);
 
@@ -212,10 +212,10 @@ export class RepositoryController {
                     }
                 });
 
-            }),
+            }
         ],
 
-        (error: any, result: any): Response | void => {
+        (error: any, result: any) => {
 
             const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
