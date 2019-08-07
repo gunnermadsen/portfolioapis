@@ -191,7 +191,6 @@ export class RepositoryController {
     @Middleware(JwtInterceptor.checkJWTToken)
     private uploadFile(request: Request, response: Response): void {
 
-        const userId = response['user']._id;
         const file = request.files[0];
 
         if (!file) {
@@ -217,7 +216,7 @@ export class RepositoryController {
 
         (err: any, result: any) => {
 
-            const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
+            const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, file.originalname)
 
             fs.writeFile(cwd, result[0].value, (error: any) => {
                 if (error) {
