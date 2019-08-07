@@ -215,26 +215,21 @@ export class RepositoryController {
             }
         ],
 
-        (error: any, result: any) => {
+        (err: any, result: any) => {
 
             const cwd = path.join(__dirname, 'repository', userId, request.body.path, file.originalname);
 
-            if (error) {
-                response.status(500).json({ message: "An error occured while trying to complete the file upload cycle", error: error });
-            }
-            else {
-                fs.writeFile(cwd, result[0].value, (error: any) => {
-                    if (error) {
-                        response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
-                    }
-                    else {
-                        const filename = file.originalname.replace(/ /g, '\\\ ');
-                        const command = `rm -rf ./uploads/${filename}`;
-                        cmd.run(command);
-                        response.status(204).end();
-                    }
-                })
-            }
+            fs.writeFile(cwd, result[0].value, (error: any) => {
+                if (error) {
+                    response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
+                }
+                else {
+                    const filename = file.originalname.replace(/ /g, '\\\ ');
+                    const command = `rm -rf ./uploads/${filename}`;
+                    cmd.run(command);
+                    response.status(204).end();
+                }
+            })
         })
     }
 
