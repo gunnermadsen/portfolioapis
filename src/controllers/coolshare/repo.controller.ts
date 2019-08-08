@@ -218,7 +218,7 @@ export class RepositoryController {
 
             const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, file.originalname)
 
-            fs.writeFile(cwd, result[0].value, (error: any) => {
+            fs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
                     response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
