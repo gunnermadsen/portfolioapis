@@ -223,9 +223,9 @@ export class RepositoryController {
                     return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
                 else {
-                    const filename = file.originalname.replace(/ /g, '\\\ ');
-                    const command = `rm -rf ./uploads/${filename}`;
-                    cmd.run(command);
+                    // const filename = file.originalname.replace(/ /g, '\\\ ');
+                    // const command = `rm -rf ./uploads/${filename}`;
+                    // cmd.run(command);
                     return response.status(204).end();
                 }
             })
