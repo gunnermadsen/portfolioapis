@@ -189,12 +189,12 @@ export class RepositoryController {
 
     @Post('upload')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private uploadFile(request: Request, response: Response): void {
+    private uploadFile(request: Request, response: Response): Response {
 
         const file = request.files[0];
 
         if (!file) {
-            response.status(404).json({ message: "No Files were present during upload" })
+            return response.status(404).json({ message: "No Files were present during upload" })
         }
 
         async.parallel([
@@ -204,7 +204,7 @@ export class RepositoryController {
 
                 fs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
-                        response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
+                        return response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
                     }
                     else {
                         callback(null, data);
@@ -220,13 +220,13 @@ export class RepositoryController {
 
             fs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
-                    response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
+                    return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
                 else {
                     const filename = file.originalname.replace(/ /g, '\\\ ');
                     const command = `rm -rf ./uploads/${filename}`;
                     cmd.run(command);
-                    response.status(204).end();
+                    return response.status(204).end();
                 }
             })
         })
