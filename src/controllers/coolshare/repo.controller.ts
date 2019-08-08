@@ -202,7 +202,7 @@ export class RepositoryController {
 
                 fs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
-                        return response.status(500).json({ message: "An error occured when reading the file from the uploads folder", error: error });
+                        return response.status(400).json({ message: "An error occured when reading the file from the uploads folder", error: error });
                     }
                     else {
                         callback(null, data);
@@ -218,7 +218,7 @@ export class RepositoryController {
 
             fs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
-                    return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
+                    return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
                 else {
                     const filename = request.files[0].originalname.replace(/ /g, '\\\ ');
