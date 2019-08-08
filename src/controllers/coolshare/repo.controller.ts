@@ -200,7 +200,7 @@ export class RepositoryController {
         async.parallel([
             (callback: any) => {
 
-                const uploads = path.resolve(file.path);
+                const uploads = path.resolve(file.path)
 
                 fs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
