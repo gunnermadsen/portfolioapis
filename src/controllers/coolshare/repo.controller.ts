@@ -191,16 +191,14 @@ export class RepositoryController {
     @Middleware(JwtInterceptor.checkJWTToken)
     private uploadFile(request: Request, response: Response): Response {
 
-        const file = request.files[0];
-
-        if (!file) {
+        if (!request.files[0]) {
             return response.status(404).json({ message: "No Files were present during upload" })
         }
 
         async.parallel([
             (callback: any) => {
 
-                const uploads = path.resolve(file.path)
+                const uploads = path.resolve(request.files[0].path)
 
                 fs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
@@ -216,16 +214,16 @@ export class RepositoryController {
 
         (err: any, result: any) => {
 
-            const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, file.originalname)
+            const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, request.files[0].originalname)
 
             fs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
                     return response.status(500).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
                 else {
-                    // const filename = file.originalname.replace(/ /g, '\\\ ');
-                    // const command = `rm -rf ./uploads/${filename}`;
-                    // cmd.run(command);
+                    const filename = request.files[0].originalname.replace(/ /g, '\\\ ');
+                    const command = `rm -rf ./uploads/${filename}`;
+                    cmd.run(command);
                     return response.status(204).end();
                 }
             })
