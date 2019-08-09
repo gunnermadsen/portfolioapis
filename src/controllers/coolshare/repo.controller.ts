@@ -2,6 +2,7 @@ import { Request, Response, response } from 'express';
 import * as multer from 'multer';
 import * as cmd from 'node-cmd';
 import * as fs from 'fs-extra';
+import * as nodefs from 'fs';
 import * as crypto from 'crypto';
 import * as async from 'async';
 
@@ -200,7 +201,7 @@ export class RepositoryController {
 
                 const uploads = path.resolve(request.files[0].path)
 
-                fs.readFile(uploads, (error: any, data: any) => {
+                nodefs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
                         return response.status(400).json({ message: "An error occured when reading the file from the uploads folder", error: error });
                     }
@@ -212,11 +213,11 @@ export class RepositoryController {
             }
         ],
 
-        async (err: any, result: any) => {
+        (err: any, result: any) => {
 
             const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, request.files[0].originalname)
 
-            await fs.writeFile(cwd, result[0], (error: any) => {
+            nodefs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
                     return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error });
                 }
