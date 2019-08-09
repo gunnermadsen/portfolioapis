@@ -88,7 +88,7 @@ export class RepositoryController {
 
                 filePath = path.resolve(cwd, file);
 
-                fs.stat(filePath, async (err: any, stat: any): Promise<Response> => {
+                fs.stat(filePath, (err: any, stat: any) => {
 
                     // let base = (!stat.isDirectory()) ? new Buffer(fs.readFileSync(path.join(cwd, file)).toString(), 'base64').toString('ascii') : false;
 
@@ -100,8 +100,9 @@ export class RepositoryController {
                     let userName = request.body.userName ? request.body.userName : null;
 
                     let resource = userName ? pathName : file;
+                    let sharedStatus: any = {}
                     
-                    const sharedStatus = await this.validateShareUri(resource, userName);
+                    this.validateShareUri(resource, userName).then((status: any) => sharedStatus = status);
 
                     results.push({
                         id: crypto.createHash('md5').update(file).digest('hex'),
