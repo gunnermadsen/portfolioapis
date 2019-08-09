@@ -234,7 +234,7 @@ export class RepositoryController {
 
     @Post('delete')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private deleteItem(request: Request, response: Response): Response | void {
+    private async deleteItem(request: Request, response: Response) {
 
         const files = request.body.items;
 
@@ -246,18 +246,14 @@ export class RepositoryController {
 
         const folder = path.join(userId, request.body.path);
 
-        try {
-            async.each(files, async (file: any, callback: any) => {
+        async.each(files, (file: any, callback: any) => {
+            try {
 
                 const directory = path.join(request.body.path, file);
 
-                const cwd = path.join(__dirname, 'repository', userId, directory);
+                const cwd = path.join(__dirname, 'repository', userId, directory)
 
-                const share = await this.validateShareUri(file);
-
-                if (share.status) {
-                    await sharedFolderModel.deleteOne({ _id: userId });
-                }
+                const share = this.validateShareUri(file).then((share: any) => share ? sharedFolderModel.deleteOne({ _id: userId }) : null);
 
                 if (fs.lstatSync(cwd).isDirectory()) {
 
@@ -279,19 +275,19 @@ export class RepositoryController {
                         }
                     })
                 }
-            },
-            (error: any) => {
-                if (error) {
-                    return response.status(500).json({ error: error })
-                } else {
+            } catch (error) {
+                return response.status(500).json({ message: error });
+            }
+        },
+        (error: any) => {
+            if (error) {
+                return response.status(500).json({ error: error })
+            } else {
 
-                    //this.getFolderContents(request, response, folder);
-                    return response.status(201).json({ message: "Delete Operation Successful" });
-                }
-            })
-        } catch (error) {
-            return response.status(500).json({ message: error });
-        }
+                //this.getFolderContents(request, response, folder);
+                return response.status(201).json({ message: "Delete Operation Successful" });
+            }
+        })
 
         
     }
