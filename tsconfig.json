@@ -16,7 +16,7 @@
         "noImplicitAny": true,
         "watch": false,
         "skipLibCheck": true,
-        "target": "esnext",
+        "target": "es5",
         "typeRoots": [
             "node_modules/@types"
         ],
