@@ -35,7 +35,7 @@
             "address": "localhost",
             "port": 9229,
             "protocol": "inspector",
-            "localRoot": "${workspaceFolder}/dist",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/dist"
         },
     ]
