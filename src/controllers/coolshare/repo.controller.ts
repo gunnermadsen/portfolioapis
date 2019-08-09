@@ -44,7 +44,7 @@ export class RepositoryController {
 
         let results: any[] = [];
 
-        let userId = request.body.id //response['user']._id;
+        let userId = response['user']._id;
 
         let urn: string = request.body.path;
         let filePath: string;
