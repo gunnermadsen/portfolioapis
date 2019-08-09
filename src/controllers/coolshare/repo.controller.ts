@@ -1,5 +1,4 @@
 import { Request, Response, response } from 'express';
-import * as multer from 'multer';
 import * as cmd from 'node-cmd';
 import * as fs from 'fs-extra';
 import * as nodefs from 'fs';
@@ -45,7 +44,7 @@ export class RepositoryController {
 
         let results: any[] = [];
 
-        let userId = response['user']._id;
+        let userId = request.body.id //response['user']._id;
 
         let urn: string = request.body.path;
         let filePath: string;
@@ -295,7 +294,7 @@ export class RepositoryController {
 
     @Get('download')
     // @Middleware(JwtInterceptor.checkJWTToken)
-    private downloadItem(request: Request, response: Response, next: NextFunction) {
+    private downloadItem(request: Request, response: Response) {
 
         const dir = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource);
 

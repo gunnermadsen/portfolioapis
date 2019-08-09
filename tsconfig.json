@@ -8,7 +8,7 @@
         "checkJs": true,
         "allowJs": true,
         "declaration": false,
-        "module": "commonjs",
+        "module": "es2015",
         "moduleResolution": "node",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
@@ -16,7 +16,7 @@
         "noImplicitAny": true,
         "watch": false,
         "skipLibCheck": true,
-        "target": "es5",
+        "target": "es2017",
         "typeRoots": [
             "node_modules/@types"
         ],
