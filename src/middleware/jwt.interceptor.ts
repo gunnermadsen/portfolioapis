@@ -5,21 +5,21 @@ import { NextFunction } from "express";
 const UserModel = new User().getModelForClass(User);
 
 export class JwtInterceptor {
-    public static async checkJWTToken(request: Request, response: Response, next: NextFunction) {
+    public static async checkJWTToken(request: Request, response: Response, next: NextFunction): Promise<Response> {
 
-        let token = request.headers.authorization;
+        try {
+            let token = request.headers.authorization;
 
-        if (token) {
-            const user = new UserModel();
-            if (token.startsWith('Bearer ')) {
-                token = token.slice(7, token.length).trimLeft();
-            }
-            else {
-                response.status(401).json({ message: "Invalid Token" })
-            }
+            if (token) {
+                const user = new UserModel();
+                if (token.startsWith('Bearer ')) {
+                    token = token.slice(7, token.length).trimLeft();
+                }
+                else {
+                    response.status(401).json({ message: "Invalid Token" })
+                }
 
-            await user.verifySessionToken(token)
-                .then((data: any) => {
+                await user.verifySessionToken(token).then((data: any) => {
                     response['user'] = data;
                     next();
                 })
@@ -27,9 +27,13 @@ export class JwtInterceptor {
                     return response.status(401).json({ error: error });
                 })
 
-        } else {
-            return response.status(401).json({ message: "A valid token is required to access this resource", status: 401 })
+            } else {
+                return response.status(401).json({ message: "A valid token is required to access this resource", status: 401 })
+            }
+
+        } catch (error) {
+            return response.status(500).json({ message: "An error occured when processing your request", error: error })
         }
-        
+
     }
 }
