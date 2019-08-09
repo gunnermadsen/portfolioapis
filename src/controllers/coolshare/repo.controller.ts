@@ -188,7 +188,7 @@ export class RepositoryController {
 
 
     @Post('upload')
-    @Middleware(JwtInterceptor.checkJWTToken)
+    // @Middleware(JwtInterceptor.checkJWTToken)
     private uploadFile(request: Request, response: Response): Response {
 
         if (!request.files[0]) {
