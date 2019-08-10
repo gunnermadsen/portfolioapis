@@ -246,14 +246,18 @@ export class RepositoryController {
 
         const folder = path.join(userId, request.body.path);
 
-        async.each(files, (file: any, callback: any) => {
+        async.each(files, async (file: any, callback: any) => {
             try {
 
                 const directory = path.join(request.body.path, file);
 
                 const cwd = path.join(__dirname, 'repository', userId, directory)
 
-                const share = this.validateShareUri(file).then((share: any) => share ? sharedFolderModel.deleteOne({ _id: userId }) : null);
+                const share = await this.validateShareUri(file);
+
+                if (share.status) {
+                    await sharedFolderModel.deleteOne({ _id: userId })
+                }
 
                 if (fs.lstatSync(cwd).isDirectory()) {
 
