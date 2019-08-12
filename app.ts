@@ -19,6 +19,7 @@ import { UserController } from './src/controllers/authentication/authentication.
 import { RepositoryController } from './src/controllers/coolshare/repo.controller';
 import { CookbookController } from './src/controllers/mindful-meals/kitchen.controller';
 import { AccountController } from './src/controllers/account/account.controller';
+import { NotificationController } from './src/controllers/notifications/notifications.controller';
 
 export class PortfolioServer extends Server {
 
@@ -84,8 +85,9 @@ export class PortfolioServer extends Server {
     let repoController = new RepositoryController();
     let cookbookController = new CookbookController();
     let accountController = new AccountController();
+    let notificationController = new NotificationController();
 
-    super.addControllers([ userController, repoController, cookbookController, accountController ]);
+    super.addControllers([userController, repoController, cookbookController, accountController, notificationController ]);
   }
 
   public start(): void {
