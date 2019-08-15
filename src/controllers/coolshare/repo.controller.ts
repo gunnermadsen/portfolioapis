@@ -4,6 +4,12 @@ import * as fs from 'fs-extra';
 import * as nodefs from 'fs';
 import * as crypto from 'crypto';
 import * as async from 'async';
+// import * as imageThumbnail from 'image-thumbnail';
+import * as ImageThumbnail from 'thumbnail';
+
+import * as filepreview from 'filepreview-es6';
+
+import * as ThumbNail from 'node-thumbnail';
 
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
 import * as path from 'path';
@@ -12,6 +18,7 @@ import { SharedFolders } from '../../models/shared-folder.model';
 
 import * as mime from 'mime';
 import { NextFunction } from 'connect';
+import { doesNotThrow } from 'assert';
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
 
@@ -114,6 +121,7 @@ export class RepositoryController {
                         empty: false,
                         isShared: sharedStatus.status,
                         path: path.join(pathName, list[index]),
+                        thumbnail: `http://localhost:3000/${userId}/thumb_${file}`.replace(/ /g, '_')
                     });
 
                     if (!--pending) {
@@ -132,7 +140,8 @@ export class RepositoryController {
 
     @Post('create') // /:folder*?/:data*?
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async createNewFolder(request: Request, response: Response, id: string): Promise<Response | void> {
+    private async createNewFolder(request: Request, response: Response): Promise<Response | void> {
+
         // - rwx r-x r-x
         
         // owner: 7 - unlimited execution permissions as directory owner
@@ -217,15 +226,17 @@ export class RepositoryController {
 
             const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, request.files[0].originalname)
 
+
             nodefs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
-                    return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error });
+                    return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error })
                 }
                 else {
-                    const filename = request.files[0].originalname.replace(/ /g, '\\\ ');
-                    const command = `rm -rf ./uploads/${filename}`;
-                    cmd.run(command);
-                    return response.status(204).end();
+                    const filename = this.formatPath(request.files[0].originalname)
+                    const command = `rm -rf ./uploads/${filename}`
+                    cmd.run(command)
+                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    return response.status(204).end()
                 }
             })
         })
@@ -334,6 +345,54 @@ export class RepositoryController {
             return response.status(500).json({ message: error });
         });
         
+    }
+
+    private createThumbnailFromFile(source: string, id: string, name: string): void {
+
+        let outfile = name.split('.')[0]
+
+        let destination = path.resolve('thumbnails', id, `${outfile.replace(/\.[^/.]+$/, "")}.png`)
+
+        // const options = {
+        //     source: source, // could be a filename: dest/path/image.jpg
+        //     destination: destination,
+        //     concurrency: 4,
+        //     width: 110,
+        //     prefix: 'thumb_',
+        //     suffix: '',
+        //     basename: name.replace(/ /g, '_').split('.')[0]
+        // }
+
+        // ThumbNail.thumb(options).then(() => {
+        //     console.log("success");
+        // })
+        // .catch((error: any) => {
+        //     console.error(error);
+        // })
+
+
+        const options = {
+            width: 110,
+            height: 140,
+            quality: 100,
+            background: '#fff',
+            pdf: true,
+            keepAspect: false,
+            pdf_path: path.resolve('thumbnails', id)
+        }
+
+        filepreview
+        .generateAsync(source.replace(/ /g, '\\\ '), destination, options)
+        .then((response: any) => {
+            console.log(response)
+        })
+        .catch((error: any) => {
+            console.error(error)
+        })
+    }
+
+    private formatPath(entity: string): string {
+        return entity.replace(/ /g, '\\\ ')
     }
 
     private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {

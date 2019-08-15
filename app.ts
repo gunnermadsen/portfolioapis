@@ -42,7 +42,7 @@ export class PortfolioServer extends Server {
     
     // this.app.use(compression());
 
-    // this.app.use('/static', express.static(path.join(__dirname, 'src/controllers/coolshare/repository')));
+    this.app.use(express.static('thumbnails'));
     
     this.app.disable('x-powered-by');
 

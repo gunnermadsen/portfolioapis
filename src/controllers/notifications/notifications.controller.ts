@@ -6,7 +6,7 @@ import * as async from 'async';
 import * as path from 'path';
 
 import { Request, Response, response } from 'express';
-import { Controller, Post, ClassMiddleware, Middleware, Get, Delete } from '@overnightjs/core';
+import { Controller, Post, ClassMiddleware, Middleware, Get, Delete, Put } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
 import { Notifications } from '../../models/notifications.model';
@@ -34,17 +34,16 @@ export class NotificationController {
 
             const data = await notificationModel.find({ UserId: id });
 
-            return response.status(200).json({ ...data[0].toObject() });
+            let result = { ... data[0].toObject() }
+
+            return response.status(200).json(result);
 
         } catch (error) {
 
             return response.status(500).json(error);
 
         }
-
-
-
-    }   
+    }
 
     @Post('create')
     @Middleware(JwtInterceptor.checkJWTToken)
@@ -70,10 +69,22 @@ export class NotificationController {
                 createdOn: request.body.createdOn
             }
     
-            const data = await notificationModel.updateOne({ UserId: userId }, { $push: { Notifications: notification }});
+            const data = await notificationModel.updateOne(
+                {
+                    UserId: userId 
+                },
+                {
+                    $push: {
+                        Notifications: notification
+                    },
+                    $set: {
+                        NotificationBadgeHidden: false
+                    }
+                }
+            );
             
             if (data) {
-                return response.status(204).end() //.json({ notifications: data });
+                return response.status(201).json({ notifications: notification, notificationBadgeHidden: false });
             } 
             else {
                 return response.status(404).end()
@@ -108,8 +119,11 @@ export class NotificationController {
                 { 
                     $pull: { 
                         Notifications: { }
+                    },
+                    $set: {
+                        NotificationBadgeHidden: true
                     }
-                }, 
+                },
                 { multi: true }
             )
 
@@ -125,4 +139,53 @@ export class NotificationController {
             return response.status(500).end()
         }
     }
+
+
+    @Put(':id')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    public async setNotificationBadgeState(request: Request, response: Response): Promise<Response | void> {
+
+        const id: string = request.params.id
+
+        const viewState = request.body.state
+
+        if (!id) {
+            return response.status(400).end()
+        }
+
+        try {
+            const model = await notificationModel.find({ UserId: id })
+
+            if (!model) {
+                return response.status(404).end()
+            }
+
+            const state = await notificationModel.updateOne(
+                {
+                    UserId: id
+                }, 
+                { 
+                    $set: {
+                        NotificationBadgeHidden: viewState 
+                    }
+                }
+            )
+
+            if (state.ok === 1) {
+                return response.status(204).end()
+            }
+            else {
+                return response.status(500).end()
+            }
+
+
+        } catch (error) {
+
+            return response.status(500).end()
+
+        }
+
+    }
+
+
 }

@@ -7,4 +7,7 @@ export class Notifications extends Typegoose {
     @prop()
     public UserId: string;
 
+    @prop()
+    public NotificationBadgeHidden: boolean;
+
 }
