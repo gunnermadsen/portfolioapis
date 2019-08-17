@@ -1,24 +1,22 @@
 import { Request, Response, response } from 'express';
+
 import * as cmd from 'node-cmd';
 import * as fs from 'fs-extra';
 import * as nodefs from 'fs';
 import * as crypto from 'crypto';
 import * as async from 'async';
-// import * as imageThumbnail from 'image-thumbnail';
-import * as ImageThumbnail from 'thumbnail';
+import * as path from 'path';
+import * as mime from 'mime';
+import * as quicklookThumbnail from 'quicklook-thumbnail';
+import * as prettyIcon from 'pretty-file-icons'
 
-import * as filepreview from 'filepreview-es6';
+import { convertFile } from 'convert-svg-to-png'
 
-import * as ThumbNail from 'node-thumbnail';
 
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
-import * as path from 'path';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { SharedFolders } from '../../models/shared-folder.model';
 
-import * as mime from 'mime';
-import { NextFunction } from 'connect';
-import { doesNotThrow } from 'assert';
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
 
@@ -26,7 +24,6 @@ export interface IShare {
     UserName?: string;
     ShareName: string;
 }
-
 
 export interface IPublicShare {
     UserId: string;
@@ -50,6 +47,8 @@ export class RepositoryController {
     private getFolderContents(request: Request, response: Response, readPath?: any) {
 
         let results: any[] = [];
+
+        let server = (process.env.NODE_ENV === 'development') ? 'http://localhost:3000' : 'https://portfolioapis.herokuapp.com' 
 
         let userId = response['user']._id;
 
@@ -94,7 +93,7 @@ export class RepositoryController {
 
                 filePath = path.resolve(cwd, file);
 
-                fs.stat(filePath, (err: any, stat: any) => {
+                fs.stat(filePath, async (err: any, stat: any) => {
 
                     // let base = (!stat.isDirectory()) ? new Buffer(fs.readFileSync(path.join(cwd, file)).toString(), 'base64').toString('ascii') : false;
 
@@ -106,10 +105,15 @@ export class RepositoryController {
                     let userName = request.body.userName ? request.body.userName : null;
 
                     let resource = userName ? pathName : file;
-                    let sharedStatus: any = {}
+                    let iconPath: string = ""
                     
-                    this.validateShareUri(resource, userName).then((status: any) => sharedStatus = status);
+                    const sharedStatus = await this.validateShareUri(resource, userName) //.then((status: any) => sharedStatus = status);
 
+                    let fileName = path.parse(file).name
+                    let thumbnailPath = `${server}/${userId}/${fileName}`
+
+                    iconPath = sharedStatus.status ? `${server}/shared-folder.png` : `${server}/folder.png`
+                    
                     results.push({
                         id: crypto.createHash('md5').update(file).digest('hex'),
                         index: index,
@@ -121,14 +125,14 @@ export class RepositoryController {
                         empty: false,
                         isShared: sharedStatus.status,
                         path: path.join(pathName, list[index]),
-                        thumbnail: `http://localhost:3000/${userId}/thumb_${file}`.replace(/ /g, '_')
+                        thumbnail: (stat.isDirectory()) ? iconPath : `${thumbnailPath}.png`
                     });
 
                     if (!--pending) {
                         return response.status(200).json({ 
-                            content: results, 
-                            userId: userId, 
-                            userName: userName 
+                            content: results,
+                            userId: userId,
+                            userName: userName
                         });
                     }
                     
@@ -235,7 +239,7 @@ export class RepositoryController {
                     const filename = this.formatPath(request.files[0].originalname)
                     const command = `rm -rf ./uploads/${filename}`
                     cmd.run(command)
-                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
                     return response.status(204).end()
                 }
             })
@@ -290,6 +294,9 @@ export class RepositoryController {
                         }
                     })
                 }
+
+                await cmd.run(`rm -r ./thumbnails/${userId}/${file}`)
+
             } catch (error) {
                 return response.status(500).json({ message: error });
             }
@@ -298,8 +305,8 @@ export class RepositoryController {
             if (error) {
                 return response.status(500).json({ error: error })
             } else {
-
-                //this.getFolderContents(request, response, folder);
+                
+                // this.getFolderContents(request, response, folder);
                 return response.status(201).json({ message: "Delete Operation Successful" });
             }
         })
@@ -347,47 +354,43 @@ export class RepositoryController {
         
     }
 
-    private createThumbnailFromFile(source: string, id: string, name: string): void {
+    private createThumbnailFromFile(source: string, id: string, file: string): void {
 
-        let outfile = name.split('.')[0]
-
-        let destination = path.resolve('thumbnails', id, `${outfile.replace(/\.[^/.]+$/, "")}.png`)
-
-        // const options = {
-        //     source: source, // could be a filename: dest/path/image.jpg
-        //     destination: destination,
-        //     concurrency: 4,
-        //     width: 110,
-        //     prefix: 'thumb_',
-        //     suffix: '',
-        //     basename: name.replace(/ /g, '_').split('.')[0]
-        // }
-
-        // ThumbNail.thumb(options).then(() => {
-        //     console.log("success");
-        // })
-        // .catch((error: any) => {
-        //     console.error(error);
-        // })
-
+        let destination = path.resolve('thumbnails', id) 
 
         const options = {
-            width: 110,
-            height: 140,
-            quality: 100,
-            background: '#fff',
-            pdf: true,
-            keepAspect: false,
-            pdf_path: path.resolve('thumbnails', id)
+            size: 256,
+            folder: destination
         }
 
-        filepreview
-        .generateAsync(source.replace(/ /g, '\\\ '), destination, options)
-        .then((response: any) => {
-            console.log(response)
-        })
-        .catch((error: any) => {
-            console.error(error)
+        quicklookThumbnail.create(source, options, async (error: any, result: any) => {
+            if (error) {
+
+                const icon = prettyIcon.getIcon(file, 'svg')
+
+                const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon) 
+
+                let outputFile = `${destination}/${file}`.replace(/\.\s/, ' ').split('.')[0]
+
+                const settings = {
+                    outputFilePath: `${outputFile}.png`,
+                    width: 110,
+                    height: 140
+                }
+
+                try {
+                    const destPath = await convertFile(sourcePath, settings)
+
+                    console.log("File Icon written to: " + destPath)
+
+                } catch (error) {
+                    console.log(error)
+                }
+
+            }
+            else {
+                console.log("Thumbnail created at: " + result)
+            }
         })
     }
 

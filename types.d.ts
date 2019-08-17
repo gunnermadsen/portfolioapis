@@ -1,14 +1,6 @@
 declare module 'node-cmd';
 
-declare module 'thumbnail';
+declare module 'pretty-file-icons';
 
-declare module 'node-thumbnail';
-
-declare module 'filepreview-es6';
-// export declare module cmd {
-
-//     /**
-//      * run:	command	runs a command asynchronously
-//      */
-//     run(): void 
-// }
+declare module 'quicklook-thumbnail';
+declare module 'convert-svg-to-png';
