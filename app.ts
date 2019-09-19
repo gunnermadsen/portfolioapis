@@ -56,7 +56,6 @@ export class PortfolioServer extends Server {
         'https://gunner-madsen.com',
         'https://coolshare.herokuapp.com',
         'https://www.shareily.com',
-        'https://shareily.com',
         'https://mindfulmeals.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
