@@ -21,8 +21,8 @@
     "copy-thumbnail-images": "cp -r -v thumbnails/* dist/thumbnails"
   },
   "engines": {
-    "node": "10.11.0",
-    "npm": "6.10.1"
+    "node": "12.8.0",
+    "npm": "6.11.3"
   },
   "dependencies": {
     "@overnightjs/core": "^1.6.9",
