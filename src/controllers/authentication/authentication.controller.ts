@@ -11,8 +11,11 @@ import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
 import { Controller, Middleware, Get, Post, Put, Delete } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
+import { Notifications } from '../../models/notifications.model';
 
 const UserModel = new User().getModelForClass(User);
+
+const notificationModel = new Notifications().getModelForClass(Notifications)
 
 @Controller('api/users') 
 export class UserController {
@@ -82,9 +85,16 @@ export class UserController {
 
         try {
 
-            const duplicate = await UserModel.findOne({ UserName: userName, Email: email })
+            const duplicate = await UserModel.find(
+                {
+                    $or: [
+                        { UserName: userName }, 
+                        { Email: email }
+                    ]
+                }
+            )
 
-            if (duplicate) {
+            if (duplicate.length) {
                 return response.status(400).json({
                     message: `The username or email you provided is already taken`
                 });
@@ -110,9 +120,19 @@ export class UserController {
                 const directory = path.join(cwd, user.id);
                 const file: string = path.join(cwd, 'Getting Started.pdf').replace(/(\s+)/g, '\\$1');
 
-                fs.mkdirSync(directory, 0o755);
+                const userNotificationModel: any = {
+                    Notifications: [],
+                    UserId: result._id,
+                    NotificationBadgeHidden: true
+                }
 
-                cmd.run(`cp -r ${file} ${directory}`);
+                const notification = await notificationModel.create(userNotificationModel)
+
+                fs.mkdirSync(directory, 0o755)
+                fs.mkdirSync(`thumbnails/${user.id}`)
+
+                cmd.run(`cp -r ${file} ${directory}`)
+                cmd.run(`cp thumbnails/"Getting Started.png" thumbnails/${user.id}`)
 
                 response.status(200).json({ message: "Your account has been created successfully" })
 

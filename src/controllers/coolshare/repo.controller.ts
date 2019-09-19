@@ -1,5 +1,3 @@
-import { Request, Response, response } from 'express';
-
 import * as cmd from 'node-cmd';
 import * as fs from 'fs-extra';
 import * as nodefs from 'fs';
@@ -7,196 +5,105 @@ import * as crypto from 'crypto';
 import * as async from 'async';
 import * as path from 'path';
 import * as mime from 'mime';
+import * as uuid from 'uuid'
+
 import * as quicklookThumbnail from 'quicklook-thumbnail';
 import * as prettyIcon from 'pretty-file-icons'
 
 import { convertFile } from 'convert-svg-to-png'
 
+import { Request, Response, response } from 'express';
 
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { SharedFolders } from '../../models/shared-folder.model';
+import { Files, IFiles } from '../../models/files.model';
+import { EntityTypes } from '../../models/entity.type';
+import { IShare } from '../../models/share.model';
+import { IEntity } from '../../models/entity.model';
 
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
+const filesModel = new Files().getModelForClass(Files)
 
-export interface IShare {
-    UserName?: string;
-    ShareName: string;
-}
-
-export interface IPublicShare {
-    UserId: string;
-    Path: string;
-    Type: string;
-    ShareName: string;
-    UserName: string;
-    Invitees: string[]
-    Files: any;
-    CreatedOn: Date
-    EditedOn: Date
-}
 
 @Controller('api/repo')
 // @ClassMiddleware(JwtInterceptor.checkJWTToken)
 export class RepositoryController {
 
-
-    @Post('') //:folder*?
+    @Get('')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private getFolderContents(request: Request, response: Response, readPath?: any) {
+    private async getFolderContents(request: Request, response: Response): Promise<Response | void> {
 
-        let results: any[] = [];
-
-        let server = (process.env.NODE_ENV === 'development') ? 'http://localhost:3000' : 'https://portfolioapis.herokuapp.com' 
-
-        let userId = response['user']._id;
-
-        let urn: string = request.body.path;
-        let filePath: string;
-        let cwd: string;
-
-        if (readPath && typeof readPath === 'string') {
-            cwd = path.join(__dirname, 'repository', readPath)
-        } 
-        else {
-            cwd = path.join(__dirname, 'repository', userId, urn);
+        const userId = request.query.id
+        const cwd = request.query.path
+        
+        if (!userId && !cwd) {
+            return response.status(400).end()
         }
 
-        fs.readdir(cwd, (error: any, list: any[]) => {
+        try {
 
-            if (error) {
-                return response.status(404).json({ message: error })
+            const payload = await filesModel.find({ UserId: userId })
+
+            const result = {
+                result: payload[0].Files.length ? payload[0].Files : [{ Name: "No contents to display" }],
+
+                settings: {
+                    isEmpty: payload[0].Files.length ? true : false,
+                    cwd: cwd
+                }
             }
 
-            if (list.length == 0) {
+            return response.status(200).json(result)
 
-                const name = "No Contents to Display";
+        } 
+        catch (error) {
 
-                results.push({
-                    id: crypto.createHash('md5').update(name).digest('hex'),
-                    name: name,
-                    cwd: (typeof readPath === 'string') ? readPath : path.join(request.body.path),
-                    empty: true,
-                });
+            return response.status(500).json(error)
 
-                return response.status(200).json({ content: results, userId: userId });
-            }
+        }
 
-            let pending = list.length;
-
-            if (!pending) {
-                return response.status(201).json(results);
-            }
-
-            list.forEach((file: string, index: number) => {
-
-                filePath = path.resolve(cwd, file);
-
-                fs.stat(filePath, async (err: any, stat: any) => {
-
-                    // let base = (!stat.isDirectory()) ? new Buffer(fs.readFileSync(path.join(cwd, file)).toString(), 'base64').toString('ascii') : false;
-
-                    if (error) {
-                        return response.status(404).json({ message: err })
-                    }
-                    
-                    let pathName = request.body.path ? request.body.path : request.body.shareName;
-                    let userName = request.body.userName ? request.body.userName : null;
-
-                    let resource = userName ? pathName : file;
-                    let iconPath: string = ""
-                    
-                    const sharedStatus = await this.validateShareUri(resource, userName) //.then((status: any) => sharedStatus = status);
-
-                    let fileName = path.parse(file).name
-                    let thumbnailPath = `${server}/${userId}/${fileName}`
-
-                    iconPath = sharedStatus.status ? `${server}/shared-folder.png` : `${server}/folder.png`
-                    
-                    results.push({
-                        id: crypto.createHash('md5').update(file).digest('hex'),
-                        index: index,
-                        name: file,
-                        type: (stat.isDirectory()) ? "Folder" : "File",
-                        size: stat.size + " Bytes",
-                        creationDate: stat.birthtime,
-                        cwd: path.join('/', pathName),
-                        empty: false,
-                        isShared: sharedStatus.status,
-                        path: path.join(pathName, list[index]),
-                        thumbnail: (stat.isDirectory()) ? iconPath : `${thumbnailPath}.png`
-                    });
-
-                    if (!--pending) {
-                        return response.status(200).json({ 
-                            content: results,
-                            userId: userId,
-                            userName: userName
-                        });
-                    }
-                    
-                });
-            });
-        });    
     }
 
 
     @Post('create') // /:folder*?/:data*?
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async createNewFolder(request: Request, response: Response): Promise<Response | void> {
+    private createNewFolder(request: Request, response: Response): Response | void {
 
-        // - rwx r-x r-x
-        
-        // owner: 7 - unlimited execution permissions as directory owner
-        // group: 5 - restrict write permissions in group
-        // world: 5 - restrict write permissions in world
+        const userId = response['user']._id
+        const folderData: any = request.body.data;
+        const cwd: string = path.join(__dirname, 'repository', userId, request.body.path, folderData.FolderName);
 
-        const userId = response['user']._id;
+        let metadata: any = folderData.Accessibility === 1 ? { invitees: folderData.Invitees, owner: folderData.FolderName } : null
 
-        if (!userId && !request.body.path) { // && !folderData.data.userName
-            return response.status(400).json({ message: "The request was invalid" });
+        if (fs.existsSync(cwd)) {
+            return response.status(409).json({ message: "This folder name already exists" })
         }
 
-        const directory: string = path.join(userId, request.body.path);
-        const cwd: string = path.join(__dirname, 'repository', directory, request.body.data.FolderName);
-        const folderData: any = request.body;
-
-        let permission: number = 0o755;
-
-        try {
-            if (fs.existsSync(cwd)) {
-                return response.status(409).json({ message: "This folder name already exists" })
+        fs.mkdir(cwd, 0o755, (error: any) => {
+            if (error) {
+                return response.status(500).end()
             }
             else {
-
-                if (folderData.data.Accessibility === 1) {
-
-                    //let name: string = folderData.data.FolderName.replace(/ /g, '-');
-
-                    const folder: IPublicShare = {
-                        UserId: folderData.id,
-                        Path: directory,
-                        Type: folderData.data.Type,
-                        ShareName: folderData.data.FolderName,
-                        UserName: folderData.userName,
-                        Invitees: folderData.data.Invitees,
-                        Files: null,
-                        CreatedOn: new Date(),
-                        EditedOn: new Date()
-                        //uri: `/${folderData.data.userName}/${name}`
-                    }
-
-                    const sharedFolder = await sharedFolderModel.create(folder);
-                    console.log(sharedFolder);
+                const entity = {
+                    originalName: folderData.FolderName,
+                    cwd: request.body.path,
+                    path: path.join(request.body.path, folderData.FolderName),
+                    id: userId,
+                    absPath: cwd,
+                    type: EntityTypes.Folder,
+                    meta: metadata,
+                    icon: `/${folderData.Accessibility === 1 ? 'shared-folder' : 'folder'}.png`
                 }
 
-                fs.mkdirSync(cwd, permission);
-                this.getFolderContents(request, response, directory);
+                this.createEntity(entity)
+
+                return response.status(204).end()
+
+                // this.getContentsOfFolder(request, response)
             }
-        } catch (error) {
-            return response.status(500).json({ message: error });
-        }
+        })
 
     }
 
@@ -216,30 +123,40 @@ export class RepositoryController {
 
                 nodefs.readFile(uploads, (error: any, data: any) => {
                     if (error) {
-                        return response.status(400).json({ message: "An error occured when reading the file from the uploads folder", error: error });
+                        return response.status(400).json({ message: "An error occured when reading the file from the uploads folder", error: error })
                     }
                     else {
-                        callback(null, data);
+                        callback(null, data)
                     }
-                });
+                })
 
             }
         ],
-
         (err: any, result: any) => {
 
             const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, request.files[0].originalname)
-
 
             nodefs.writeFile(cwd, result[0], (error: any) => {
                 if (error) {
                     return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error })
                 }
                 else {
-                    const filename = this.formatPath(request.files[0].originalname)
-                    const command = `rm -rf ./uploads/${filename}`
-                    cmd.run(command)
+                    
+                    cmd.run(`rm -rf ./uploads/${request.files[0].originalname.replace(/ /g, '\\\ ')}`)
+
                     this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+
+                    this.createEntity({ 
+                        originalName: request.files[0].originalname, 
+                        cwd: request.body.path, 
+                        path: path.join(request.body.path, request.files[0].originalname),
+                        id: request.body.userId, 
+                        absPath: cwd, 
+                        type: EntityTypes.File, 
+                        meta: null,
+                        
+                    })
+
                     return response.status(204).end()
                 }
             })
@@ -249,68 +166,59 @@ export class RepositoryController {
 
     @Post('delete')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async deleteItem(request: Request, response: Response) {
+    private deleteItem(request: Request, response: Response) {
 
-        const files = request.body.items;
+        const entities = request.body.entities
 
-        const userId = response['user']._id;
+        const userId: string = request.body.id
+        
+        if (!entities) response.status(400).end()
 
-        if (!files) {
-            return response.status(400).json({ message: "Bad Request" });
-        }
+        try {
 
-        const folder = path.join(userId, request.body.path);
+            async.each(entities, async (entity: { name: string, path: string, type: string }, callback: Function) => {
 
-        async.each(files, async (file: any, callback: any) => {
-            try {
+                const cwd = path.join(__dirname, 'repository', userId, request.body.path, entity.name)
 
-                const directory = path.join(request.body.path, file);
+                if (entity.type === 'Folder') {
 
-                const cwd = path.join(__dirname, 'repository', userId, directory)
+                    const exp = new RegExp(entity.path)
 
-                const share = await this.validateShareUri(file);
+                    const outcome = await filesModel.updateMany({ UserId: userId }, { $pull: { Files: { Path: { $regex: exp } } } } )
 
-                if (share.status) {
-                    await sharedFolderModel.deleteOne({ _id: userId })
+                } 
+                else {
+                    const iconPath = path.resolve('thumbnails', userId, `${path.parse(entity.name).name}.png`) 
+
+                    const deleteState = await filesModel.update( { UserId: userId }, { $pull: { Files: { Name: entity.name } } } )
+
+                    await fs.remove(iconPath)
                 }
 
-                if (fs.lstatSync(cwd).isDirectory()) {
 
-                    fs.remove(cwd, (error: any) => {
-                        if (error) {
-                            return response.status(500).json({ error: error })
-                        }
-                        else {
-                            callback();
-                        }
-                    })
+                fs.remove(cwd, (error: any) => {
+                    if (error) {
+                        return response.status(500).json({ error: error })
+                    }
+                    else {
+                        callback()
+                    }
+                })
+
+            },
+            (error: any) => {
+                if (error) {
+                    return response.status(500).json({ error: error })
                 }
                 else {
-                    fs.unlink(cwd, (error: any) => {
-                        if (error) {
-                            return response.status(500).json({ error: error })
-                        } else {
-                            callback();
-                        }
-                    })
+                    return response.status(201).json({ message: "Delete Operation Successful" })
                 }
+            })
 
-                await cmd.run(`rm -r ./thumbnails/${userId}/${file}`)
-
-            } catch (error) {
-                return response.status(500).json({ message: error });
-            }
-        },
-        (error: any) => {
-            if (error) {
-                return response.status(500).json({ error: error })
-            } else {
-                
-                // this.getFolderContents(request, response, folder);
-                return response.status(201).json({ message: "Delete Operation Successful" });
-            }
-        })
-
+        } 
+        catch (error) {
+            return response.status(500).json({ message: error })
+        }
         
     }
 
@@ -333,8 +241,7 @@ export class RepositoryController {
     @Post('verify')
     private verifyLink(request: Request, response: Response) {
 
-        const shareName = request.body.shareName;
-        const userName = request.body.userName;
+        const { shareName, userName } = request.body
 
         this.validateShareUri(shareName, userName).then((share: any) => {
             if (share.status) {
@@ -342,7 +249,7 @@ export class RepositoryController {
 
                 response['user']._id = share.data.UserId;
 
-                this.getFolderContents(request, response, folder)
+                this.getFolderContents(request, response)
             }
             else {
                 return response.status(404).json({ message: "We could not find the resource you specified" })
@@ -353,6 +260,104 @@ export class RepositoryController {
         });
         
     }
+
+    @Post('favorite')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    private async modifyFavorites(request: Request, response: Response): Promise<Response | void> {
+
+        try {
+            const { fileId, userId, state } = request.body
+
+            const result = await filesModel.update({ UserId: userId, "Files.Id": fileId }, { $set: { "Files.$.IsFavorite": state }})
+
+            if (result.nModified >= 1) {
+                return response.status(200).json({ message: "Operation Successful" })
+            }
+            else {
+                return response.status(400).end()
+            }
+
+        } 
+        catch (error) {
+            return response.status(500).json(error)
+
+        }
+
+    }
+
+    @Post('rename')
+    private async renameEntity(request: Request, response: Response): Promise<Response | void> {
+
+        try {
+            const { userId, entity } = request.body
+
+            const result = await filesModel.update(
+                { UserId: userId, "Files.Id": entity.changes.Id }, 
+                { $set: { 
+                    "Files.$.Name": entity.changes.Name, 
+                    // "Files.$.Path": entity.changes.Path,
+                    // "Files.$.ThumbnailPath": `/${userId}/${entity.changes.Name}` 
+                } }
+            )
+
+            return response.status(200).json({ message: "Operation Successful" })
+
+            // if (result.nModified >= 1) {
+                
+            // }
+            // else {
+            //     return response.status(400).end()
+            // }
+
+        }
+        catch (error) {
+            return response.status(500).json(error)
+
+        }
+    }
+
+    private async createEntity(payload: IEntity): Promise<any> {
+
+        try {
+
+            // check for a duplicate
+            const duplicate = await filesModel.find({ UserId: payload.id }, { Files: { $elemMatch: { Path: payload.path } } })
+
+            if (duplicate[0].Files) {
+                const result = await filesModel.update({ UserId: payload.id }, { $pull: { Files: { Name: payload.originalName } } })
+            }
+
+            const stats = await fs.stat(payload.absPath)
+
+            const entity: IFiles = {
+                Id: uuid.v4(),
+                Name: payload.originalName,
+                Type: payload.type,
+                Size: stats.size,
+                Cwd: payload.cwd,
+                Path: payload.path,
+                ThumbnailPath: payload.type === EntityTypes.File ? `/${payload.id}/${path.parse(payload.originalName).name}.png` : payload.icon,
+                IsFavorite: false,
+                IsShared: false,
+                CreatedOn: new Date(),
+                EditedOn: new Date(),
+                ShareData: payload.meta,
+                MetaData: payload.meta
+            }
+
+            await filesModel.updateOne(
+                { UserId: payload.id },
+                { $push: { Files: entity } }
+            )
+
+        }
+        catch (error) {
+
+            return response.status(500).end()
+
+        }
+    }
+
 
     private createThumbnailFromFile(source: string, id: string, file: string): void {
 
@@ -366,16 +371,16 @@ export class RepositoryController {
         quicklookThumbnail.create(source, options, async (error: any, result: any) => {
             if (error) {
 
-                const icon = prettyIcon.getIcon(file, 'svg')
+                const icon = prettyIcon.getIcon(file, 'svg') 
 
                 const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon) 
 
-                let outputFile = `${destination}/${file}`.replace(/\.\s/, ' ').split('.')[0]
+                let outputFile: string = `${destination}/${path.parse(file).name}.png`//.replace(/\.\s/, ' ').split('.')[0]
 
                 const settings = {
-                    outputFilePath: `${outputFile}.png`,
-                    width: 110,
-                    height: 140
+                    outputFilePath: outputFile,
+                    width: 90,
+                    height: 120
                 }
 
                 try {
@@ -383,7 +388,8 @@ export class RepositoryController {
 
                     console.log("File Icon written to: " + destPath)
 
-                } catch (error) {
+                } 
+                catch (error) {
                     console.log(error)
                 }
 
@@ -392,10 +398,6 @@ export class RepositoryController {
                 console.log("Thumbnail created at: " + result)
             }
         })
-    }
-
-    private formatPath(entity: string): string {
-        return entity.replace(/ /g, '\\\ ')
     }
 
     private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
@@ -425,3 +427,20 @@ export class RepositoryController {
     }
 
 }
+
+
+
+
+
+
+
+/**
+ * Aggregate query operations:
+ * 
+ * Find Sub Documents using regular expression 
+ * const result = await filesModel.aggregate([
+        { $match: { UserId: userId }},
+        { $unwind: "$Files" },
+        { $match: { "Files.Path": { $regex: exp } } }
+    ])
+ */
