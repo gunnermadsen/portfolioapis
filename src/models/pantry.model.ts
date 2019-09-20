@@ -1,4 +1,4 @@
-import { prop, Typegoose } from 'typegoose';
+import { prop, Typegoose } from '@hasezoey/typegoose';
 import { PantryCategories } from './pantry-categories.type';
 
 export class PantryItems extends Typegoose {

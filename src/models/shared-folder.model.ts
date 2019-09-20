@@ -1,4 +1,4 @@
-import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from 'typegoose';
+import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from '@hasezoey/typegoose';
 
 export class SharedFolders extends Typegoose {
 

@@ -25,6 +25,7 @@
     "npm": "6.11.3"
   },
   "dependencies": {
+    "@hasezoey/typegoose": "^5.9.2",
     "@overnightjs/core": "^1.6.9",
     "@overnightjs/logger": "^1.1.9",
     "@trongnd/ts-nodemon": "^1.0.3",
@@ -76,7 +77,6 @@
     "pretty-file-icons": "^2.2.1",
     "quicklook-thumbnail": "^1.0.0",
     "reflect-metadata": "^0.1.13",
-    "typegoose": "^5.8.1",
     "typescript": "^3.5.2",
     "uuid": "^3.3.3",
     "webpack": "^4.36.1",
