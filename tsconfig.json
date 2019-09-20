@@ -1,7 +1,7 @@
 {
     "compileOnSave": false,
     
-    "exclude": ["dist", "webpack.config.js", "temp"],
+    "exclude": ["dist", "webpack.config.js", "temp", "./src/controllers/coolshare/repository"],
     "compilerOptions": {
         "outDir": "./dist",
         "sourceMap": true,
@@ -16,7 +16,7 @@
         "noImplicitAny": true,
         "watch": false,
         "skipLibCheck": true,
-        "target": "es6",
+        "target": "esnext",
         "typeRoots": [
             "node_modules/@types"
         ],
