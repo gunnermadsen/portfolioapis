@@ -1,7 +1,7 @@
 import * as cmd from 'node-cmd';
 import * as fs from 'fs-extra';
 import * as nodefs from 'fs';
-import * as crypto from 'crypto';
+
 import * as async from 'async';
 import * as path from 'path';
 import * as mime from 'mime';
@@ -13,6 +13,10 @@ import * as prettyIcon from 'pretty-file-icons'
 import { convertFile } from 'convert-svg-to-png'
 
 import { Request, Response, response } from 'express';
+
+// import { Thumbnail } from 'thumbnail'
+
+import * as Thumbnail from 'thumbnail'
 
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
@@ -144,7 +148,7 @@ export class RepositoryController {
                     
                     cmd.run(`rm -rf ./uploads/${request.files[0].originalname.replace(/ /g, '\\\ ')}`)
 
-                    this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
 
                     this.createEntity({ 
                         originalName: request.files[0].originalname, 
@@ -176,7 +180,7 @@ export class RepositoryController {
 
         try {
 
-            async.each(entities, async (entity: { name: string, path: string, type: string }, callback: Function) => {
+            async.each(entities, async (entity: any, callback: Function) => {
 
                 const cwd = path.join(__dirname, 'repository', userId, request.body.path, entity.name)
 
@@ -184,17 +188,16 @@ export class RepositoryController {
 
                     const exp = new RegExp(entity.path)
 
-                    const outcome = await filesModel.updateMany({ UserId: userId }, { $pull: { Files: { Path: { $regex: exp } } } } )
+                    const outcome = await filesModel.updateMany({ UserId: userId }, { $pull: { Files: { Path: { $regex: exp } } } })
 
-                } 
+                }
                 else {
-                    const iconPath = path.resolve('thumbnails', userId, `${path.parse(entity.name).name}.png`) 
+                    const iconPath = path.resolve('thumbnails', userId, `${path.parse(entity.name).name}.png`)
 
-                    const deleteState = await filesModel.update( { UserId: userId }, { $pull: { Files: { Name: entity.name } } } )
+                    const deleteState = await filesModel.update({ UserId: userId }, { $pull: { Files: { Name: entity.name } } })
 
                     await fs.remove(iconPath)
                 }
-
 
                 fs.remove(cwd, (error: any) => {
                     if (error) {
@@ -215,26 +218,26 @@ export class RepositoryController {
                 }
             })
 
-        } 
+        }
         catch (error) {
             return response.status(500).json({ message: error })
         }
-        
+
     }
 
     @Get('download')
     // @Middleware(JwtInterceptor.checkJWTToken)
     private downloadItem(request: Request, response: Response) {
 
-        const dir = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource);
+        const dir = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource)
 
-        const mimeType = mime.getType(request.query.resource);
+        const mimeType = mime.getType(request.query.resource)
 
-        response.setHeader('Content-Type', mimeType);
-        response.setHeader('Content-Transfer-Encoding', 'binary');
-        response.setHeader('Content-disposition', `attachment; filename=${request.query.resource}`);
+        response.setHeader('Content-Type', mimeType)
+        response.setHeader('Content-Transfer-Encoding', 'binary')
+        response.setHeader('Content-disposition', `attachment; filename=${request.query.resource}`)
 
-        response.download(dir);
+        response.download(dir)
                 
     }
 
@@ -245,9 +248,9 @@ export class RepositoryController {
 
         this.validateShareUri(shareName, userName).then((share: any) => {
             if (share.status) {
-                const folder = path.join(share.data.UserId, share.data.ShareName);
+                const folder = path.join(share.data.UserId, share.data.ShareName)
 
-                response['user']._id = share.data.UserId;
+                response['user']._id = share.data.UserId
 
                 this.getFolderContents(request, response)
             }
@@ -256,7 +259,7 @@ export class RepositoryController {
             }
         })
         .catch(error => {
-            return response.status(500).json({ message: error });
+            return response.status(500).json({ message: error })
         });
         
     }
@@ -267,6 +270,12 @@ export class RepositoryController {
 
         try {
             const { fileId, userId, state } = request.body
+
+            const exists = await filesModel.find({ UserId: userId, "Files.Id": fileId })
+
+            if (!exists[0].Files) {
+                return response.status(404).end()
+            }
 
             const result = await filesModel.update({ UserId: userId, "Files.Id": fileId }, { $set: { "Files.$.IsFavorite": state }})
 
@@ -363,41 +372,75 @@ export class RepositoryController {
 
         let destination = path.resolve('thumbnails', id) 
 
+        try {
+
+             if (process.env.NODE_ENV === 'development') {
+                 this.createThumbnailInDevelopment(source, file, destination)
+             }
+             return
+            //  else {
+            //      this.createThumbnailInProduction(source, destination, file)
+            //  }
+        } 
+        catch (error) {
+            console.log(error)
+            return 
+        }
+    }
+
+    private createThumbnailInProduction(source: string, destination: string, file: string): any {
+
+        let thumbnail = new Thumbnail(source, destination)
+
+        thumbnail.ensureThumbnail(file, 90, 120, (error: any, filename: string) => {
+            if (error) {
+                this.createThumbnailFromSvg(destination, file)
+            }
+            else {
+                console.log("Thumbnail created at: " + filename)
+            }
+        })
+    }
+
+    private createThumbnailInDevelopment(source: string, file: string, destination: string): any {
+
         const options = {
             size: 256,
             folder: destination
         }
 
-        quicklookThumbnail.create(source, options, async (error: any, result: any) => {
+        quicklookThumbnail.create(source, options, (error: any, result: any) => {
             if (error) {
-
-                const icon = prettyIcon.getIcon(file, 'svg') 
-
-                const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon) 
-
-                let outputFile: string = `${destination}/${path.parse(file).name}.png`//.replace(/\.\s/, ' ').split('.')[0]
-
-                const settings = {
-                    outputFilePath: outputFile,
-                    width: 90,
-                    height: 120
-                }
-
-                try {
-                    const destPath = await convertFile(sourcePath, settings)
-
-                    console.log("File Icon written to: " + destPath)
-
-                } 
-                catch (error) {
-                    console.log(error)
-                }
-
+                this.createThumbnailFromSvg(destination, file)
             }
             else {
                 console.log("Thumbnail created at: " + result)
             }
         })
+    }
+
+    private async createThumbnailFromSvg(destination: string, file: string): Promise<void> {
+        const icon = prettyIcon.getIcon(file, 'svg')
+
+        const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon)
+
+        let outputFile: string = `${destination}/${path.parse(file).name}.png`//.replace(/\.\s/, ' ').split('.')[0]
+
+        const settings = {
+            outputFilePath: outputFile,
+            width: 90,
+            height: 120
+        }
+
+        try {
+            const destPath = await convertFile(sourcePath, settings)
+
+            console.log("File Icon written to: " + destPath)
+
+        }
+        catch (error) {
+            console.log(error)
+        }
     }
 
     private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
@@ -408,20 +451,20 @@ export class RepositoryController {
             }
 
             if (userName) {
-                resource.UserName = userName;
+                resource.UserName = userName
             }
 
-            const share = await sharedFolderModel.findOne(resource);
+            const share = await sharedFolderModel.findOne(resource)
 
             const result: any = {
                 data: share,
                 status: (share) ? true : false
             }
 
-            return result;
+            return result
 
         } catch (error) {
-            return response.status(400).json({ message: error });
+            return response.status(400).json({ message: error })
         }
         
     }

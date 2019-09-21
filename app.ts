@@ -23,6 +23,10 @@ import { NotificationController } from './src/controllers/notifications/notifica
 
 export class PortfolioServer extends Server {
 
+  public get server() {
+    return this.app
+  }
+
   constructor() {
 
     dotenv.config();
