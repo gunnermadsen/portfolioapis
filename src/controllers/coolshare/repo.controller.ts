@@ -21,7 +21,7 @@ import * as Thumbnail from 'thumbnail'
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { SharedFolders } from '../../models/shared-folder.model';
-import { Files, IFiles } from '../../models/files.model';
+import { Files, IFile } from '../../models/files.model';
 import { EntityTypes } from '../../models/entity.type';
 import { IShare } from '../../models/share.model';
 import { IEntity } from '../../models/entity.model';
@@ -37,25 +37,22 @@ export class RepositoryController {
 
     @Get('')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async getFolderContents(request: Request, response: Response): Promise<Response | void> {
+    private async getRepository(request: Request, response: Response): Promise<Response | void> {
 
-        const userId = request.query.id
-        const cwd = request.query.path
+        const { id, path } = request.query
         
-        if (!userId && !cwd) {
-            return response.status(400).end()
-        }
+        if (!id && !path) return response.status(400).end()
 
         try {
 
-            const payload = await filesModel.find({ UserId: userId })
+            const entities = await filesModel.find({ UserId: id })
 
             const result = {
-                result: payload[0].Files.length ? payload[0].Files : [{ Name: "No contents to display" }],
+                result: entities[0].Files.length ? entities[0].Files : [{ Name: "No contents to display" }],
 
                 settings: {
-                    isEmpty: payload[0].Files.length ? true : false,
-                    cwd: cwd
+                    isEmpty: entities[0].Files.length ? true : false,
+                    cwd: path
                 }
             }
 
@@ -196,7 +193,7 @@ export class RepositoryController {
 
                     const deleteState = await filesModel.update({ UserId: userId }, { $pull: { Files: { Name: entity.name } } })
 
-                    await fs.remove(iconPath)
+                    const iconDeleteState = await fs.remove(iconPath)
                 }
 
                 fs.remove(cwd, (error: any) => {
@@ -214,7 +211,7 @@ export class RepositoryController {
                     return response.status(500).json({ error: error })
                 }
                 else {
-                    return response.status(201).json({ message: "Delete Operation Successful" })
+                    return response.status(201).end()
                 }
             })
 
@@ -252,7 +249,7 @@ export class RepositoryController {
 
                 response['user']._id = share.data.UserId
 
-                this.getFolderContents(request, response)
+                this.getRepository(request, response)
             }
             else {
                 return response.status(404).json({ message: "We could not find the resource you specified" })
@@ -295,28 +292,84 @@ export class RepositoryController {
     }
 
     @Post('rename')
+    // @Middleware(JwtInterceptor.checkJWTToken)
     private async renameEntity(request: Request, response: Response): Promise<Response | void> {
 
+        const { userId, entity, cwd } = request.body
+
+        let files: IFile[] = []
+
+        let batchUpdateResult: any
+
+        let entityCwd = path.join(__dirname, 'repository', userId, cwd)
+
         try {
-            const { userId, entity } = request.body
 
-            const result = await filesModel.update(
-                { UserId: userId, "Files.Id": entity.changes.Id }, 
-                { $set: { 
-                    "Files.$.Name": entity.changes.Name, 
-                    // "Files.$.Path": entity.changes.Path,
-                    // "Files.$.ThumbnailPath": `/${userId}/${entity.changes.Name}` 
-                } }
-            )
+            if (entity.type === 'File') {
 
-            return response.status(200).json({ message: "Operation Successful" })
+                const result = await filesModel.update(
+                    { UserId: userId, "Files.Id": entity.fileId },
+                    { $set: { "Files.$.Name": entity.newName, "Files.$.Path": entity.path, "Files.$.ThumbnailPath": `/${userId}/${entity.newName}` } }
+                )
 
-            // if (result.nModified >= 1) {
-                
-            // }
-            // else {
-            //     return response.status(400).end()
-            // }
+            }
+            else {
+
+                const exp = new RegExp(entity.path)
+
+                // how many layers down into the folder do we perform the replacement?
+                let pathLayer: number = entity.path.split('/').length - 1
+                let cwdLayer: number = cwd.split('/').length
+
+                if (cwd === "/") cwdLayer -= 1
+
+                let documents = await filesModel.aggregate([
+                    { $match: { UserId: userId } },
+                    { $unwind: { path: "$Files" } },
+                    { $match: { "Files.Path": { $regex: exp } } }
+                ])
+
+                if (!documents.length) return response.status(500).json({ message: "0 results found"})
+
+                documents.forEach(async (document: any, index: number) => {
+                    let file: IFile = document.Files
+                    let pathTree = file.Path.split('/')
+                    let cwdTree = file.Cwd.split('/')
+
+                    pathTree[pathLayer] = entity.newName
+                    file.Path = pathTree.toString().replace(/,/g, '/')
+
+                    if (index > 0) {
+                        cwdTree[cwdLayer] = entity.newName
+                        file.Cwd = cwdTree.toString().replace(/,/g, '/')
+                    }
+
+                    if (file.Id === entity.id) {
+                        file.Name = entity.newName
+                    }
+
+                    files.push(file)
+
+                    try {
+                        const updateResult = await filesModel.update({ UserId: userId }, { $pull: { Files: { Id: file.Id } } })
+                    }
+                    catch (error) {
+                        return response.status(500).json(error)
+                    }
+
+                })
+
+                batchUpdateResult = await filesModel.update({ UserId: userId }, { $push: { Files: { $each: files } } })
+
+                // return response.status(200).end()
+            }
+
+            fs.rename(`${entityCwd}/${entity.oldName}`, `${entityCwd}/${entity.newName}`, (error: NodeJS.ErrnoException) => {
+                if (error) {
+                    return response.status(500).json(error)
+                }
+                return response.status(200).json(files)
+            })
 
         }
         catch (error) {
@@ -338,7 +391,7 @@ export class RepositoryController {
 
             const stats = await fs.stat(payload.absPath)
 
-            const entity: IFiles = {
+            const entity: IFile = {
                 Id: uuid.v4(),
                 Name: payload.originalName,
                 Type: payload.type,
@@ -388,7 +441,7 @@ export class RepositoryController {
         }
     }
 
-    private createThumbnailInProduction(source: string, destination: string, file: string): any {
+    private createThumbnailInProduction(source: string, destination: string, file: string): void {
 
         let thumbnail = new Thumbnail(source, destination)
 
@@ -402,7 +455,7 @@ export class RepositoryController {
         })
     }
 
-    private createThumbnailInDevelopment(source: string, file: string, destination: string): any {
+    private createThumbnailInDevelopment(source: string, file: string, destination: string): void {
 
         const options = {
             size: 256,
@@ -470,20 +523,3 @@ export class RepositoryController {
     }
 
 }
-
-
-
-
-
-
-
-/**
- * Aggregate query operations:
- * 
- * Find Sub Documents using regular expression 
- * const result = await filesModel.aggregate([
-        { $match: { UserId: userId }},
-        { $unwind: "$Files" },
-        { $match: { "Files.Path": { $regex: exp } } }
-    ])
- */

@@ -1,5 +1,4 @@
 
-import 'jest'
 
 import { PortfolioServer } from '../../../app'
 import { DoneFn } from '@jest/types/build/Global'
@@ -21,46 +20,70 @@ const url = 'http://localhost:3000'
 describe ('Repository Action Method Tests', () => {
 
     describe ('GET', () => {
-        it ('should 200 after consuming /api/repo and successfully retrieving the users files from the database', async () => {
-            const response = await request(app)
+        it ('should 200 after consuming /api/repo and successfully retrieving the users files from the database', (done: DoneFn) => {
+            request(app)
                 .get('/api/repo')
                 .set({ 'Authorization': token })
                 .query({ id: id, path: '/' })
-
-            expect(response.status).toBe(200)
-            expect(response.body.length).toBeGreaterThan(0)
+                .then((response) => {
+                    expect(response.status).toBe(200)
+                    expect(response.body.result.length).toBeGreaterThan(0)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeTruthy()
+                    done()
+                })
         })
 
-        it ('should 200 after consuming /api/repo/download and downloading the specified resource', async () => {
-            const response = await request(app)
+        it ('should 200 after consuming /api/repo/download and downloading the specified resource', (done: DoneFn) => {
+            request(app)
                 .get('/api/repo/download')
                 .set('Content-Type', 'application/json')
                 .set('Accept', '*/*')
                 .responseType('json')
                 .query({ path: '/', resource: 'Gunner Madsen - Help Desk Technician.docx', id: id })
-            expect(response.status).toBe(200)
+                .then((response) => {
+                    expect(response.status).toBe(200)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeTruthy()
+                    done()
+                })
         })
     })
 
     describe ('POST', () => {
-        it ('should 204 after consuming /api/repo/delete and creating the MyMovies folder', async () => {
-            const response = await request(app)
+        it ('should 204 after consuming /api/repo/delete and creating the MyMovies folder', (done: DoneFn) => {
+            request(app)
                 .post('/api/repo/create')
                 .set({ 'Authorization': token })
                 .send({ id: id, path: '/', data: { FolderName: 'MyMovies', Accessibility: 0 }})
-
-            expect(response.status).toBe(204)
+                .then((response) => {
+                    expect(response.status).toBe(204)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeTruthy()
+                    done()
+                })
         })
 
-        it ('should 204 after consuming /api/repo/upload and successfully uploading a file', async () => {
-            const response = await request(app)
+        it ('should 204 after consuming /api/repo/upload and successfully uploading a file', (done: DoneFn) => {
+            request(app)
                 .post('/api/repo/upload')
                 .attach('0', path.join(__dirname, 'resume.pdf'))
                 .attach('path', '/')
                 .attach('userId', id)
-
-            expect(response.status).toBe(204)
-
+                .then((response) => {
+                    expect(response.status).toBe(204)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeTruthy()
+                    done()
+                })
         })
 
         it ('should 201 after deleting the MyMovies folder', async () => {
@@ -73,24 +96,48 @@ describe ('Repository Action Method Tests', () => {
             
         })
 
-        it ('should 200 after marking an entity as a favorite', async (done: DoneFn) => {
-            const response = await request(app)
+        it ('should 200 after marking an entity as a favorite', (done: DoneFn) => {
+            request(app)
                 .post('/api/repo/favorite')
                 .set({ 'Authorization': token })
-                .send({ fileId: '291207d3-64b3-4811-988f-30acf047f3c2', state: true, userId: id })
-
-            expect(response.status).toBe(200)
-            done()
+                .send({ fileId: '90d8d2f7-b3f0-47f4-bbb4-2b646b729a16', state: true, userId: id })
+                .then((response) => {
+                    expect(response.status).toBe(200)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeTruthy()
+                    done()
+                })
+            
         })
 
-        it ('should 200 after renaming an entity in the repository', async (done: DoneFn) => {
-            const response = await request(app)
+        it ('should 204 after renaming the file', (done: DoneFn) => {
+            
+            const payload = {
+                cwd: '/',
+                userId: id,
+                entity: {
+                    fileId: '5aa8cbd4-e58c-48ef-bcd5-a30dbb6915cc',
+                    newName: 'music',
+                    type: 'Folder',
+                    path: '/music'
+                }
+            }
+            
+            request(app)
                 .post('/api/repo/rename')
                 // .set({ 'Authorization': token })
-                .send({ userId: id, entity: { Id: '291207d3-64b3-4811-988f-30acf047f3c2', Name: 'resume.pdf' }})
-
-            expect(response.status).toBe(200)
-            done()
+                .send(payload)
+                .then((response) => {
+                    expect(response.status).toBe(200)
+                    done()
+                })
+                .catch((error) => {
+                    expect(error).toBeFalsy()
+                    done()
+                })
+            
         })
     })
 

@@ -17,6 +17,21 @@
             ]
         },
         {
+            "name": "PortfolioAPIs Cluster: Debug Server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/start.ts",
+            "autoAttachChildProcesses": true,
+            "sourceMaps": true,
+            "skipFiles": [
+                "${workspaceRoot}/node_modules/**/*.js",
+                "<node_internals>/**/*.js"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/*.js"
+            ]
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Debug TypeScript in Node.js",

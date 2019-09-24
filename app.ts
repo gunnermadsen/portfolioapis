@@ -6,7 +6,7 @@ import * as cors from 'cors';
 import * as multer from 'multer';
 import * as compression from 'compression'
 import * as express from 'express';
-
+import * as cluster from 'cluster'
 import * as path from 'path';
 
 import { Request, Response, NextFunction } from 'express';
@@ -17,7 +17,7 @@ import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { UserController } from './src/controllers/authentication/authentication.controller';
 import { RepositoryController } from './src/controllers/coolshare/repo.controller';
-import { CookbookController } from './src/controllers/mindful-meals/kitchen.controller';
+import { KitchenController } from './src/controllers/mindful-meals/kitchen.controller';
 import { AccountController } from './src/controllers/account/account.controller';
 import { NotificationController } from './src/controllers/notifications/notifications.controller';
 
@@ -29,27 +29,35 @@ export class PortfolioServer extends Server {
 
   constructor() {
 
+    super(process.env.NODE_ENV === 'development');
+
+    if (cluster.isMaster) { // && process.env.NODE_ENV === 'production'
+
+      cluster.fork()
+      cluster.fork()
+      cluster.fork()
+      cluster.fork()
+
+    } else {
+      this.start()
+      this.initializeMiddleware()
+      this.setupControllers()
+    }
+  }
+
+  private initializeMiddleware(): void {
     dotenv.config();
 
     const storage = multer.diskStorage({
-      destination: (req, file, callback) => {
-        callback(null, './uploads');
-      },
-      filename: (req, file, callback) => {
-        callback(null, file.originalname);
-      }
+      destination: (req, file, callback) => callback(null, './uploads'),
+      filename: (req, file, callback) => callback(null, file.originalname)
     });
 
     const upload = multer({ storage: storage });
-    
-    super(process.env.NODE_ENV === 'development');
-    
-    // this.app.use(compression());
 
+    this.app.use(compression());
     this.app.use(express.static('thumbnails'));
-    
     this.app.disable('x-powered-by');
-
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -64,7 +72,7 @@ export class PortfolioServer extends Server {
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
       allowedHeaders: ['Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'],
-      credentials: true 
+      credentials: true
     }));
 
     this.app.use(upload.any());
@@ -77,24 +85,22 @@ export class PortfolioServer extends Server {
       response.locals.error = request.app.get('env') === 'development' ? error : {};
       response.status(500).json({ message: error });
     });
-    
-    this.setupControllers();
   }
 
   private setupControllers(): void {
-    
-    const db = new Database();
 
-    let userController = new UserController();
-    let repoController = new RepositoryController();
-    let cookbookController = new CookbookController();
-    let accountController = new AccountController();
-    let notificationController = new NotificationController();
+    new Database();
+  
+    const userController = new UserController();
+    const repoController = new RepositoryController();
+    const kitchenController = new KitchenController();
+    const accountController = new AccountController();
+    const notificationController = new NotificationController();
 
-    super.addControllers([userController, repoController, cookbookController, accountController, notificationController ]);
+    super.addControllers([userController, repoController, kitchenController, accountController, notificationController ]);
   }
 
-  public start(): void {
+  private start(): void {
     let listenPort = process.env.PORT || 3000;
     this.app.listen(listenPort, () => {
       Logger.Info(`Portfolioapis listening on port ${listenPort}`);

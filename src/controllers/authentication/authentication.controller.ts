@@ -32,7 +32,7 @@ export class UserController {
 
             if (user) {
 
-                const hash = await user.validatePassword(password)
+                const hash = user.validatePassword(password)
         
                 if (user.Hash === hash && user.UserName === userName) {
                     
@@ -110,7 +110,7 @@ export class UserController {
             user.EditedOn = new Date();
             user.ProfilePicture = null;
 
-            user.Hash = await user.setPassword(password);
+            user.Hash = user.setPassword(password);
 
             const result = await UserModel.create(user);
 
@@ -155,46 +155,83 @@ export class UserController {
     
 
     @Get('')
+    @Middleware(JwtInterceptor.checkJWTToken)
     // @Middleware([middleware1, middleware2])
-    private async getAll(request: Request, response: Response): Promise<Response> {
-        Logger.Info(request.body, true);
-        const user = await UserModel.find().select('-hash');
+    private async getAll(request: Request, response: Response): Promise<Response | void> {
 
-        return response.status(200).json({...user})
+        try {
+            const user = await UserModel.find({}).select('-hash');
+            return response.status(200).json({...user})
+
+        } catch (error) {
+            return response.status(500).end()
+        }
+
     }
 
     @Get(':id')
-    private async getById(request: Request, response: Response, id: string): Promise<Response> {
-        const user = await UserModel.findById(id).select('-hash');
-        return response.status(200).json({...user});
+    @Middleware(JwtInterceptor.checkJWTToken)
+    private async getById(request: Request, response: Response, id: string): Promise<Response | void> {
+
+        try {
+
+            const user = await UserModel.findById(id).select('-hash');
+
+            return response.status(200).json({ ...user });
+
+        } 
+        catch (error) {
+
+            return response.status(500).end()
+
+        }
+
     }
 
     @Put(':id')
+    @Middleware(JwtInterceptor.checkJWTToken)
     private async update(request: Request, response: Response, id: string, userParams: any): Promise<void> {
 
-        Logger.Info(request.body);
+        try {
 
-        const user = await UserModel.findById(id);
+            const user = await UserModel.findById(id);
+    
+            if (!user) throw 'User not found';
+    
+            if (user.UserName !== userParams.UserName && await UserModel.findOne({ UserName: userParams.UserName })) {
+                throw + userParams.UserName + ' is already taken';
+            }
+    
+            if (userParams.password) {
+                userParams.hash = bcrypt.hashSync(userParams.password, 10);
+            }
+    
+            Object.assign(user, userParams);
+    
+            await user.save();
 
-        if (!user) throw 'User not found';
+            return response.status(200).end()
 
-        if (user.UserName !== userParams.UserName && await UserModel.findOne({ UserName: userParams.UserName })) {
-            throw + userParams.UserName + ' is already taken';
+
+        } catch(error) {
+            return response.status(500).end()
         }
 
-        if (userParams.password) {
-            userParams.hash = bcrypt.hashSync(userParams.password, 10);
-        }
-
-        Object.assign(user, userParams);
-
-        await user.save();
     }
 
 
     @Delete('delete/:id')
+    @Middleware(JwtInterceptor.checkJWTToken)
     private async delete(request: Request, response: Response, id: string): Promise<void> {
-        Logger.Info(request.params, true);
-        await UserModel.findByIdAndRemove(id);
+        try {
+            const result = await UserModel.findByIdAndRemove(id);
+
+            if (result) {
+                return response.status(200).end()
+            }
+
+        } catch (error) {
+            return response.status(500).end()
+        }
     }
 }

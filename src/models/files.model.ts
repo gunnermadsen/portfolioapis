@@ -3,7 +3,7 @@ import { prop, Typegoose } from '@hasezoey/typegoose';
 export class Files extends Typegoose {
 
     @prop()
-    public Files: IFiles[];
+    public Files: IFile[];
 
     @prop()
     public UserId: string;
@@ -11,7 +11,7 @@ export class Files extends Typegoose {
 }
 
 
-export interface IFiles {
+export interface IFile {
 
     Id: string
     Name: string

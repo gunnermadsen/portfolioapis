@@ -10,7 +10,7 @@ let pantryModel = new PantryItems().getModelForClass(PantryItems);
 let recipesModel = new Recipes().getModelForClass(Recipes);
 
 @Controller('api/kitchen')
-export class CookbookController {
+export class KitchenController {
 
     @Get('cookbook')
     @Middleware(JwtInterceptor.checkJWTToken)
