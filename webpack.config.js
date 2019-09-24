@@ -7,11 +7,11 @@ const { NODE_ENV = 'production' } = process.env;
 module.exports = {
     entry: './start.ts',
     externals: [ nodeExternals() ],
-    mode: NODE_ENV,
+    mode: 'development',
     target: 'node',
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'server.js'
+        path: path.resolve(__dirname, 'build'),
+        filename: 'start.js'
     },
     resolve: {
         extensions: [ '.ts', '.js' ]

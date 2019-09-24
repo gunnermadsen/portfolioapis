@@ -3,5 +3,8 @@ dist
 npm-debug.log
 .DS_Store
 /*.env
+/config
 /.keys/*.key
 webpack.config.js
+nodemon.json
+jest.config.js

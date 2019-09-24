@@ -1,4 +1,4 @@
-
+import 'jest'
 
 import { PortfolioServer } from '../../../app'
 import { DoneFn } from '@jest/types/build/Global'

@@ -7,6 +7,7 @@
   "main": "start.js",
   "scripts": {
     "test:jest": "jest --watch --detectOpenHandles --runInBand",
+    "build:webpack": "webpack",
     "build-ts": "rm -rf dist/* && tsc && npm run copy-repo && npm run make-directories && npm run copy-thumbnail-images",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
