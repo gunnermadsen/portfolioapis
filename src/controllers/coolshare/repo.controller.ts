@@ -51,7 +51,7 @@ export class RepositoryController {
                 result: entities[0].Files.length ? entities[0].Files : [{ Name: "No contents to display" }],
 
                 settings: {
-                    isEmpty: entities[0].Files.length ? true : false,
+                    isEmpty: entities[0].Files.length ? false : true,
                     cwd: path
                 }
             }
@@ -300,6 +300,7 @@ export class RepositoryController {
         let files: IFile[] = []
 
         let batchUpdateResult: any
+        let fileUpdateResult: any
 
         let entityCwd = path.join(__dirname, 'repository', userId, cwd)
 
@@ -307,9 +308,14 @@ export class RepositoryController {
 
             if (entity.type === 'File') {
 
-                const result = await filesModel.update(
-                    { UserId: userId, "Files.Id": entity.fileId },
-                    { $set: { "Files.$.Name": entity.newName, "Files.$.Path": entity.path, "Files.$.ThumbnailPath": `/${userId}/${entity.newName}` } }
+                fileUpdateResult = await filesModel.update(
+                    { UserId: userId, "Files.Id": entity.id },
+                    { $set: { 
+                        "Files.$.Name": entity.newName, 
+                        "Files.$.Path": path.join(cwd, entity.newName), 
+                        "Files.$.ThumbnailPath": path.join(userId, entity.newName),
+                        "Files.$.EditedOn": new Date()
+                    } }
                 )
 
             }
@@ -317,7 +323,7 @@ export class RepositoryController {
 
                 const exp = new RegExp(entity.path)
 
-                // how many layers down into the folder do we perform the replacement?
+                // how many layers down into the folder hierarchy do we perform the replacement?
                 let pathLayer: number = entity.path.split('/').length - 1
                 let cwdLayer: number = cwd.split('/').length
 
@@ -338,6 +344,7 @@ export class RepositoryController {
 
                     pathTree[pathLayer] = entity.newName
                     file.Path = pathTree.toString().replace(/,/g, '/')
+                    file.EditedOn = new Date()
 
                     if (index > 0) {
                         cwdTree[cwdLayer] = entity.newName
@@ -361,14 +368,13 @@ export class RepositoryController {
 
                 batchUpdateResult = await filesModel.update({ UserId: userId }, { $push: { Files: { $each: files } } })
 
-                // return response.status(200).end()
             }
 
-            fs.rename(`${entityCwd}/${entity.oldName}`, `${entityCwd}/${entity.newName}`, (error: NodeJS.ErrnoException) => {
+            fs.rename(path.join(entityCwd, entity.oldName), path.join(entityCwd, entity.newName), (error: NodeJS.ErrnoException) => {
                 if (error) {
                     return response.status(500).json(error)
                 }
-                return response.status(200).json(files)
+                return response.status(204).end()
             })
 
         }
@@ -378,7 +384,7 @@ export class RepositoryController {
         }
     }
 
-    private async createEntity(payload: IEntity): Promise<any> {
+    private async createEntity(payload: IEntity): Promise<void | Request> {
 
         try {
 
