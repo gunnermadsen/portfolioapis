@@ -1,11 +1,5 @@
-import * as cmd from 'node-cmd';
-import * as fs from 'fs-extra';
-import * as nodefs from 'fs';
-import * as crypto from 'crypto';
-import * as async from 'async';
-import * as path from 'path';
 
-import { Request, Response, response } from 'express';
+import { Request, Response } from 'express';
 import { Controller, Post, ClassMiddleware, Middleware, Get, Delete, Put } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
@@ -34,7 +28,7 @@ export class NotificationController {
 
             const data = await notificationModel.find({ UserId: id });
 
-            let result = { ... data[0].toObject() }
+            let result = { ...data[0].toObject() }
 
             return response.status(200).json(result);
 
@@ -63,10 +57,12 @@ export class NotificationController {
             }
     
             const notification = {
+                id: request.body.id,
                 type: request.body.type,
                 title: request.body.title,
                 options: request.body.options,
-                createdOn: request.body.createdOn
+                createdOn: new Date(),
+                editedOn: new Date()
             }
     
             const data = await notificationModel.updateOne(
@@ -136,6 +132,47 @@ export class NotificationController {
             }
             
         } catch (error) {
+            return response.status(500).end()
+        }
+    }
+
+    @Put('update/:id')
+    @Middleware(JwtInterceptor.checkJWTToken)
+    public async updateNotificationStatus(request: Request, response: Response): Promise<Response | void> {
+
+        const id: string = request.params.id
+
+        const notificationId = request.body.notificationId
+
+        const status = request.body.status
+
+        if (!id) {
+            return response.status(400).end()
+        }
+
+        try {
+
+            const state = await notificationModel.updateOne(
+                { 
+                    UserId: id, 
+                    "NotificationId": notificationId 
+                },
+                { 
+                    $set: {
+                        status: status
+                    }
+                }
+            )
+
+            if (state.ok === 1) {
+                return response.status(204).end()
+            }
+            else {
+                return response.status(500).end()
+            }
+
+        }
+        catch (error) {
             return response.status(500).end()
         }
     }

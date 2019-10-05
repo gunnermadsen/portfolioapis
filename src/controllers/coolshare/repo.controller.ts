@@ -48,7 +48,7 @@ export class RepositoryController {
             const entities = await filesModel.find({ UserId: id })
 
             const result = {
-                result: entities[0].Files.length ? entities[0].Files : [{ Name: "No contents to display" }],
+                result: entities[0].Files.length ? entities[0].Files : [{ Name: "No contents to display", Id: uuid.v4() }],
 
                 settings: {
                     isEmpty: entities[0].Files.length ? false : true,
@@ -76,10 +76,22 @@ export class RepositoryController {
         const folderData: any = request.body.data;
         const cwd: string = path.join(__dirname, 'repository', userId, request.body.path, folderData.FolderName);
 
-        let metadata: any = folderData.Accessibility === 1 ? { invitees: folderData.Invitees, owner: folderData.FolderName } : null
+        let metadata: { invitees: string[], owner: string, readOnly: boolean } = null
+        let isShared: boolean = false
+        let thumbnail: string = 'folder.png'
 
         if (fs.existsSync(cwd)) {
             return response.status(409).json({ message: "This folder name already exists" })
+        }
+
+        if (folderData.Accessibility === 1) {
+            metadata = { 
+                invitees: folderData.Invitees, 
+                owner: folderData.FolderName,
+                readOnly: folderData.isReadOnly
+            }
+            isShared = true
+            thumbnail = 'share-folder.png'
         }
 
         fs.mkdir(cwd, 0o755, (error: any) => {
@@ -95,7 +107,8 @@ export class RepositoryController {
                     absPath: cwd,
                     type: EntityTypes.Folder,
                     meta: metadata,
-                    icon: `/${folderData.Accessibility === 1 ? 'shared-folder' : 'folder'}.png`
+                    isShared: isShared,
+                    icon: thumbnail
                 }
 
                 this.createEntity(entity)
@@ -153,9 +166,9 @@ export class RepositoryController {
                         path: path.join(request.body.path, request.files[0].originalname),
                         id: request.body.userId, 
                         absPath: cwd, 
-                        type: EntityTypes.File, 
-                        meta: null,
-                        
+                        type: EntityTypes.File,
+                        isShared: false,
+                        meta: null
                     })
 
                     return response.status(204).end()
@@ -236,29 +249,6 @@ export class RepositoryController {
 
         response.download(dir)
                 
-    }
-
-    @Post('verify')
-    private verifyLink(request: Request, response: Response) {
-
-        const { shareName, userName } = request.body
-
-        this.validateShareUri(shareName, userName).then((share: any) => {
-            if (share.status) {
-                const folder = path.join(share.data.UserId, share.data.ShareName)
-
-                response['user']._id = share.data.UserId
-
-                this.getRepository(request, response)
-            }
-            else {
-                return response.status(404).json({ message: "We could not find the resource you specified" })
-            }
-        })
-        .catch(error => {
-            return response.status(500).json({ message: error })
-        });
-        
     }
 
     @Post('favorite')
@@ -384,6 +374,29 @@ export class RepositoryController {
         }
     }
 
+    @Post('verify')
+    private verifyLink(request: Request, response: Response) {
+
+        const { shareName, userName } = request.body
+
+        this.validateShareUri(shareName, userName).then((share: any) => {
+            if (share.status) {
+                const folder = path.join(share.data.UserId, share.data.ShareName)
+
+                response['user']._id = share.data.UserId
+
+                this.getRepository(request, response)
+            }
+            else {
+                return response.status(404).json({ message: "We could not find the resource you specified" })
+            }
+        })
+        .catch((error: any) => {
+            return response.status(500).json({ message: error })
+        });
+
+    }
+
     private async createEntity(payload: IEntity): Promise<void | Request> {
 
         try {
@@ -406,7 +419,7 @@ export class RepositoryController {
                 Path: payload.path,
                 ThumbnailPath: payload.type === EntityTypes.File ? `/${payload.id}/${path.parse(payload.originalName).name}.png` : payload.icon,
                 IsFavorite: false,
-                IsShared: false,
+                IsShared: payload.isShared,
                 CreatedOn: new Date(),
                 EditedOn: new Date(),
                 ShareData: payload.meta,
@@ -423,7 +436,7 @@ export class RepositoryController {
 
             return response.status(500).end()
 
-        }
+        } 
     }
 
 

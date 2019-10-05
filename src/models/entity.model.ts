@@ -7,6 +7,7 @@ export interface IEntity {
     id: string
     absPath: string
     type: EntityTypes.Folder | EntityTypes.File
-    meta: any
+    meta: { invitees: string[], owner: string, readOnly: boolean }
     icon?: string
+    isShared: boolean
 }
