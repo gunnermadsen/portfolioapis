@@ -1,38 +1,39 @@
-import * as cmd from 'node-cmd';
-import * as fs from 'fs-extra';
-import * as nodefs from 'fs';
+import * as cmd from 'node-cmd'
+import * as fs from 'fs-extra'
+import * as nodefs from 'fs'
 
-import * as async from 'async';
-import * as path from 'path';
-import * as mime from 'mime';
+import * as async from 'async'
+import * as path from 'path'
+import * as mime from 'mime'
 import * as uuid from 'uuid'
 
-import * as quicklookThumbnail from 'quicklook-thumbnail';
+import * as quicklookThumbnail from 'quicklook-thumbnail'
 import * as prettyIcon from 'pretty-file-icons'
 
 import { convertFile } from 'convert-svg-to-png'
 
-import { Request, Response, response } from 'express';
+import { Request, Response, response } from 'express'
 
 // import { Thumbnail } from 'thumbnail'
 
 import * as Thumbnail from 'thumbnail'
 
-import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core';
-import { JwtInterceptor } from '../../middleware/jwt.interceptor';
-import { SharedFolders } from '../../models/shared-folder.model';
-import { Files, IFile } from '../../models/files.model';
-import { EntityTypes } from '../../models/entity.type';
-import { IShare } from '../../models/share.model';
-import { IEntity } from '../../models/entity.model';
+import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core'
+import { JwtInterceptor } from '../../middleware/jwt.interceptor'
+import { SharedFolders } from '../../models/shared-folder.model'
+import { Files, IFile } from '../../models/files.model'
+import { EntityTypes } from '../../models/entity.type'
+import { IShare } from '../../models/share.model'
+import { IEntity } from '../../models/entity.model'
 
+import { LogInterceptorController } from '../../middleware/log.interceptor';
 
-const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders);
+const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders)
 const filesModel = new Files().getModelForClass(Files)
 
 
 @Controller('api/repo')
-// @ClassMiddleware(JwtInterceptor.checkJWTToken)
+@ClassMiddleware(LogInterceptorController.logNetworkRequest)
 export class RepositoryController {
 
     @Get('')
@@ -73,8 +74,8 @@ export class RepositoryController {
     private createNewFolder(request: Request, response: Response): Response | void {
 
         const userId = response['user']._id
-        const folderData: any = request.body.data;
-        const cwd: string = path.join(__dirname, 'repository', userId, request.body.path, folderData.FolderName);
+        const folderData: any = request.body.data
+        const cwd: string = path.join(__dirname, 'repository', userId, request.body.path, folderData.FolderName)
 
         let metadata: { invitees: string[], owner: string, readOnly: boolean } = null
         let isShared: boolean = false
@@ -115,7 +116,6 @@ export class RepositoryController {
 
                 return response.status(204).end()
 
-                // this.getContentsOfFolder(request, response)
             }
         })
 
@@ -245,7 +245,7 @@ export class RepositoryController {
 
         response.setHeader('Content-Type', mimeType)
         response.setHeader('Content-Transfer-Encoding', 'binary')
-        response.setHeader('Content-disposition', `attachment; filename=${request.query.resource}`)
+        response.setHeader('Content-disposition', `attachment filename=${request.query.resource}`)
 
         response.download(dir)
                 
@@ -393,7 +393,7 @@ export class RepositoryController {
         })
         .catch((error: any) => {
             return response.status(500).json({ message: error })
-        });
+        })
 
     }
 

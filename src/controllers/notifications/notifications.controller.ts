@@ -58,8 +58,9 @@ export class NotificationController {
     
             const notification = {
                 id: request.body.id,
-                type: request.body.type,
+                // type: request.body.notificationType,
                 title: request.body.title,
+                notificationType: request.body.notificationType,
                 options: request.body.options,
                 createdOn: new Date(),
                 editedOn: new Date()
