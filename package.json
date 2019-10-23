@@ -88,6 +88,7 @@
     "quicklook-thumbnail": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.0",
+    "socket-controllers": "0.0.5",
     "thumbnail": "^0.1.9",
     "typescript": "^3.5.2",
     "uuid": "^3.3.3",

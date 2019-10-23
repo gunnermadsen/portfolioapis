@@ -9,15 +9,17 @@ import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
 // import { OK, BAD_REQUEST } from 'http-status-codes';
 
-import { Controller, Middleware, Get, Post, Put, Delete } from '@overnightjs/core';
+import { Controller, Middleware, Get, Post, Put, Delete, ClassMiddleware } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { Notifications } from '../../models/notifications.model';
+import { LogInterceptorController } from '../../middleware/log.interceptor';
 
 const UserModel = new User().getModelForClass(User);
 
 const notificationModel = new Notifications().getModelForClass(Notifications)
 
-@Controller('api/users') 
+@Controller('api/users')
+@ClassMiddleware(LogInterceptorController.logNetworkRequest)
 export class UserController {
 
     @Post('login')
@@ -26,9 +28,9 @@ export class UserController {
         const userName = request.body.UserName;
         const password = request.body.Password;
 
-        const user = await UserModel.findOne({ UserName: userName });
-
         try {
+
+            const user = await UserModel.findOne({ UserName: userName });
 
             if (user) {
 
