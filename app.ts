@@ -127,24 +127,14 @@ export class PortfolioServer extends Server {
   }
 
   private start(): void {
-    let listenPort = process.env.PORT || 3000
+    const webListenPort = process.env.PORT || 3000
+    const ioListenPort = process.env.IO_PORT || 3434
+    
+    this.app.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
+    
+    const io: SocketIO.Server = createSocketServer(parseInt(ioListenPort.toString()), { controllers: [MeetingsSocketController] })
 
-    const server = http.createServer(this.app)
-    const io: SocketIO.Server = createSocketServer(3434, { controllers: [MeetingsSocketController] })
-
-    server.listen(listenPort, () => Logger.Info(`Portfolioapis listening on port ${listenPort}`))
-
-    if (module.hot) {
-      module.hot.accept();
-      module.hot.dispose(() => server.close());
-      module.hot.dispose(() => io.close());
-    }
-
-    // const server: string = process.env.NODE_ENV === 'development' ? 'localhost' : 'portfolioapis.herokuapp.com'
-
-    // io.adapter(redisAdapter({ host: server, port: 3434 }))
-
-    Logger.Info("Socket IO Server Listening on Port 3434")
+    Logger.Info(`Socket IO Server Listening on Port ${ioListenPort}`)
 
   }
 }
