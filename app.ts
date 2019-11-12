@@ -128,13 +128,12 @@ export class PortfolioServer extends Server {
 
   private start(): void {
     const webListenPort = process.env.PORT || 3000
-    const ioListenPort = process.env.IO_PORT || 3434
     
     this.app.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
     
-    const io: SocketIO.Server = createSocketServer(parseInt(ioListenPort.toString()), { controllers: [MeetingsSocketController] })
+    const io: SocketIO.Server = createSocketServer(parseInt(webListenPort.toString()), { controllers: [MeetingsSocketController] })
 
-    Logger.Info(`Socket IO Server Listening on Port ${ioListenPort}`)
+    Logger.Info(`Socket IO Server Listening on Port ${webListenPort}`)
 
   }
 }
