@@ -1,32 +1,49 @@
+const webpack = require('webpack');
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const { NODE_ENV = 'production' } = process.env;
-
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
-    entry: './start.ts',
-    externals: [ nodeExternals() ],
-    mode: 'development',
+    entry: ['webpack/hot/poll?100', './start.ts'],
+    watch: true,
     target: 'node',
-    output: {
-        path: path.resolve(__dirname, 'build'),
-        filename: 'start.js'
-    },
-    resolve: {
-        extensions: [ '.ts', '.js' ]
+    devtool: "source-map",
+    mode: 'development',
+    externals: [
+        nodeExternals({
+            whitelist: ['webpack/hot/poll?100'],
+        }),
+    ],
+    node: {
+        __dirname: true,
+        __filename: true
     },
     module: {
         rules: [
             {
-                test: /\.ts$/,
-                use: [
-                    'ts-loader'
-                ]
-            }
+                test: /.ts?$/,
+                use: 'ts-loader',
+                exclude: [ /node_modules/ ],
+            },
+        ],
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
+        plugins: [
+            new TsconfigPathsPlugin({ configFile: './tsconfig.json' })
         ]
     },
     plugins: [
-        new CleanWebpackPlugin()
-    ]
-}
+        new CleanWebpackPlugin(),
+        new webpack.ProgressPlugin(),
+        new webpack.HotModuleReplacementPlugin()
+    ],
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: 'main.js',
+    },
+    optimization: {
+        namedModules: true
+    }
+};

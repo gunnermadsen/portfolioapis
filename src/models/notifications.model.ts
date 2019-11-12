@@ -11,12 +11,3 @@ export class Notifications extends Typegoose {
     public NotificationBadgeHidden: boolean;
 
 }
-
-export interface Notifications {
-    id: string
-    type: string
-    title: string
-    options: any
-    createdOn: Date
-    editedOn: Date
-}

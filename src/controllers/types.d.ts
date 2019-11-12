@@ -6,6 +6,8 @@ declare module 'quicklook-thumbnail';
 declare module 'convert-svg-to-png';
 
 declare module 'thumbnail';
+
+declare module 'sticky-session'
 // {
 
 //     /**

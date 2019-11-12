@@ -7,10 +7,10 @@ import * as path from 'path'
 import * as mime from 'mime'
 import * as uuid from 'uuid'
 
-import * as quicklookThumbnail from 'quicklook-thumbnail'
-import * as prettyIcon from 'pretty-file-icons'
+// import * as quicklookThumbnail from 'quicklook-thumbnail'
+// import * as prettyIcon from 'pretty-file-icons'
 
-import { convertFile } from 'convert-svg-to-png'
+// import { convertFile } from 'convert-svg-to-png'
 
 import { Request, Response, response } from 'express'
 
@@ -440,80 +440,80 @@ export class RepositoryController {
     }
 
 
-    private createThumbnailFromFile(source: string, id: string, file: string): void {
+    // private createThumbnailFromFile(source: string, id: string, file: string): void {
 
-        let destination = path.resolve('thumbnails', id) 
+    //     let destination = path.resolve('thumbnails', id) 
 
-        try {
+    //     try {
 
-             if (process.env.NODE_ENV === 'development') {
-                 this.createThumbnailInDevelopment(source, file, destination)
-             }
-             return
-            //  else {
-            //      this.createThumbnailInProduction(source, destination, file)
-            //  }
-        } 
-        catch (error) {
-            console.log(error)
-            return 
-        }
-    }
+    //          if (process.env.NODE_ENV === 'development') {
+    //              this.createThumbnailInDevelopment(source, file, destination)
+    //          }
+    //          return
+    //         //  else {
+    //         //      this.createThumbnailInProduction(source, destination, file)
+    //         //  }
+    //     } 
+    //     catch (error) {
+    //         console.log(error)
+    //         return 
+    //     }
+    // }
 
-    private createThumbnailInProduction(source: string, destination: string, file: string): void {
+    // private createThumbnailInProduction(source: string, destination: string, file: string): void {
 
-        let thumbnail = new Thumbnail(source, destination)
+    //     let thumbnail = new Thumbnail(source, destination)
 
-        thumbnail.ensureThumbnail(file, 90, 120, (error: any, filename: string) => {
-            if (error) {
-                this.createThumbnailFromSvg(destination, file)
-            }
-            else {
-                console.log("Thumbnail created at: " + filename)
-            }
-        })
-    }
+    //     thumbnail.ensureThumbnail(file, 90, 120, (error: any, filename: string) => {
+    //         if (error) {
+    //             this.createThumbnailFromSvg(destination, file)
+    //         }
+    //         else {
+    //             console.log("Thumbnail created at: " + filename)
+    //         }
+    //     })
+    // }
 
-    private createThumbnailInDevelopment(source: string, file: string, destination: string): void {
+    // private createThumbnailInDevelopment(source: string, file: string, destination: string): void {
 
-        const options = {
-            size: 256,
-            folder: destination
-        }
+    //     const options = {
+    //         size: 256,
+    //         folder: destination
+    //     }
 
-        quicklookThumbnail.create(source, options, (error: any, result: any) => {
-            if (error) {
-                this.createThumbnailFromSvg(destination, file)
-            }
-            else {
-                console.log("Thumbnail created at: " + result)
-            }
-        })
-    }
+    //     quicklookThumbnail.create(source, options, (error: any, result: any) => {
+    //         if (error) {
+    //             this.createThumbnailFromSvg(destination, file)
+    //         }
+    //         else {
+    //             console.log("Thumbnail created at: " + result)
+    //         }
+    //     })
+    // }
 
-    private async createThumbnailFromSvg(destination: string, file: string): Promise<void> {
-        const icon = prettyIcon.getIcon(file, 'svg')
+    // private async createThumbnailFromSvg(destination: string, file: string): Promise<void> {
+    //     const icon = prettyIcon.getIcon(file, 'svg')
 
-        const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon)
+    //     const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon)
 
-        let outputFile: string = `${destination}/${path.parse(file).name}.png`//.replace(/\.\s/, ' ').split('.')[0]
+    //     let outputFile: string = `${destination}/${path.parse(file).name}.png`//.replace(/\.\s/, ' ').split('.')[0]
 
-        const settings = {
-            outputFilePath: outputFile,
-            width: 90,
-            height: 120
-        }
+    //     const settings = {
+    //         outputFilePath: outputFile,
+    //         width: 90,
+    //         height: 120
+    //     }
 
-        try {
-            const destPath = await convertFile(sourcePath, settings)
+    //     try {
+    //         const destPath = await convertFile(sourcePath, settings)
 
-            console.log("File Icon written to: " + destPath)
+    //         console.log("File Icon written to: " + destPath)
 
-        }
-        catch (error) {
-            console.log(error)
-        }
-    }
+    //     }
+    //     catch (error) {
+    //         console.log(error)
+    //     }
+    // }
 
     private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
 

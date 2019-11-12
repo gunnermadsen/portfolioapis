@@ -24,12 +24,17 @@
             "es2018",
             "dom"
         ],
+        "baseUrl": "./src",
         "paths": {
-            "@/*": [
-                "src/*"
+            "@controllers/*": [
+                "controllers/*"
+            ],
+            "@models/*": [
+                "models/*"
+            ],
+            "@middleware/*": [
+                "middleware/*"
             ]
-        },
-        "baseUrl": "./"
+        }
     }
-    
 }

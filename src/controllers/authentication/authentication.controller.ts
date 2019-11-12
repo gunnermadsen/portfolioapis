@@ -49,7 +49,8 @@ export class UserController {
                     let result: any = {
                         JWTToken: token,
                         CSRFToken: csrfToken,
-                        Id: user.id
+                        Id: user.id,
+                        UserName: userName
                     }
 
                     return response.status(200).json(result);
