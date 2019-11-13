@@ -8,7 +8,7 @@ import * as compression from 'compression'
 import * as express from 'express'
 import * as cluster from 'cluster'
 
-import * as io from 'socket.io'
+// import * as io from 'socket.io'
 
 import * as http from 'http'
 
@@ -23,7 +23,7 @@ import { KitchenController } from './src/controllers/mindful-meals/kitchen.contr
 import { AccountController } from './src/controllers/account/account.controller'
 import { NotificationController } from './src/controllers/notifications/notifications.controller'
 import { MeetingsController } from './src/controllers/meetings/meetings.controller'
-import { createSocketServer } from 'socket-controllers'
+import { createSocketServer, useSocketServer } from 'socket-controllers'
 import { MeetingsSocketController } from './src/controllers/meetings/meetings.socket.controller'
 
 declare const module: any;
@@ -129,12 +129,17 @@ export class PortfolioServer extends Server {
   private start(): void {
     const webListenPort = process.env.PORT || 3000
     const ioPort = 3434
+    const server = http.createServer(this.app)
+
+    const socket = require('socket.io')(server)
     
-    this.app.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
+    server.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
     
-    const io: SocketIO.Server = createSocketServer(ioPort, { controllers: [MeetingsSocketController] })
+    // const io: SocketIO.Server = createSocketServer(ioPort, { controllers: [MeetingsSocketController] })
 
     Logger.Info(`Socket IO Server Listening on Port ${ioPort}`)
+
+    useSocketServer(socket, { controllers: [MeetingsSocketController] })
 
   }
 }
