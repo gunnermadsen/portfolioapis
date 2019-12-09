@@ -1,7 +1,11 @@
 {
     "compileOnSave": false,
-    
-    "exclude": ["dist", "webpack.config.js", "temp", "./src/controllers/coolshare/repository"],
+    "exclude": [
+        "dist", 
+        "webpack.config.js", 
+        "temp", 
+        "./src/controllers/coolshare/repository"
+    ],
     "compilerOptions": {
         "outDir": "./dist",
         "sourceMap": true,
@@ -18,7 +22,8 @@
         "skipLibCheck": true,
         "target": "es6",
         "typeRoots": [
-            "node_modules/@types"
+            "node_modules/@types",
+            
         ],
         "lib": [
             "es2018",

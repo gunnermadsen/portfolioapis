@@ -1,14 +1,6 @@
 import { SocketController, OnConnect, ConnectedSocket, OnDisconnect, OnMessage, MessageBody, SocketIO, SocketId, SocketRequest, SocketRooms } from 'socket-controllers'
-
 import { IMessageBody } from '../../models/message-body.interface'
-import { Room } from 'socket.io'
-
 import { Logger } from '@overnightjs/logger'
-
-import * as md5 from 'md5'
-
-import * as uuid from 'uuid';
-
 
 @SocketController()
 export class MeetingsSocketController {
@@ -50,21 +42,20 @@ export class MeetingsSocketController {
         if (roomCount > 1 && message.roomId) {
 
             // two or more memebrs are ready send the host (or client)'s socket id to the guest (or host)
-            socket.to(message.roomId).emit('ready', message)
+            socket.broadcast.to(room).emit('ready', {...message, mode: 'signaling' })
+            // io.of(`/${message.meetingId}`).emit('ready', { ...message, mode: 'signaling' })
+
             this.standbyClients[message.meetingId] = []
-        } else {
+        } 
+        // else if (roomCount > 2 && message.roomId) {
+        //     io.in(room).emit('ready', { ...message, mode: 'signaling' })
+        // }
+        else {
 
             // the meeting host (or client) just connected, send its socket id to the guest (or host)
             // this event triggers the _addMember method on the client
             socket.to(message.meetingId).emit('standby', { ...message, roomId: socketId })
         }
-    }
-
-    @OnMessage('exchange')
-    public exchange(@ConnectedSocket() socket: SocketIO.Socket, @MessageBody() message: IMessageBody, @SocketId() socketId: string, @SocketIO() io: SocketIO.Server) {
-        socket.join(message.roomId)
-        
-        socket.broadcast.to(message.roomId).emit('exchange', message)
     }
 
     @OnMessage('timer')
@@ -80,6 +71,13 @@ export class MeetingsSocketController {
             this.standbyClients[message.meetingId].push(message.clientId)
             console.log(this.standbyClients[message.meetingId])
         }
+    }
+
+    @OnMessage('filetransfer')
+    public upload(@ConnectedSocket() socket: SocketIO.Socket, @MessageBody() message: IMessageBody, @SocketId() socketId: string) {
+        socket.join(message.roomId)
+
+        socket.to(message.roomId).emit('filetransfer', message)
     }
 
 }

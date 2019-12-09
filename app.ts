@@ -1,17 +1,3 @@
-import * as dotenv from 'dotenv'
-import * as cookieParser from 'cookie-parser'
-import * as morgan from 'morgan'
-import * as bodyParser from 'body-parser'
-import * as cors from 'cors'
-import * as multer from 'multer'
-import * as compression from 'compression'
-import * as express from 'express'
-import * as cluster from 'cluster'
-
-// import * as io from 'socket.io'
-
-import * as http from 'http'
-
 import { Request, Response, NextFunction } from 'express'
 import { Database } from './src/db/db.connection'
 
@@ -26,15 +12,23 @@ import { MeetingsController } from './src/controllers/meetings/meetings.controll
 import { createSocketServer, useSocketServer } from 'socket-controllers'
 import { MeetingsSocketController } from './src/controllers/meetings/meetings.socket.controller'
 
-declare const module: any;
+import * as dotenv from 'dotenv'
+import * as cookieParser from 'cookie-parser'
+import * as morgan from 'morgan'
+import * as bodyParser from 'body-parser'
+import * as cors from 'cors'
+import * as multer from 'multer'
+import * as compression from 'compression'
+import * as express from 'express'
+import * as cluster from 'cluster'
+import * as helmet from 'helmet'
+import * as http from 'http'
 
 export class PortfolioServer extends Server {
 
   public get server() {
     return this.app
   }
-
-  // private _application: http.Server
 
   constructor() {
 
@@ -49,25 +43,11 @@ export class PortfolioServer extends Server {
     //   cluster.fork()
 
     // } else {
+      this.start()
+      this.initializeMiddleware()
+      this.setupControllers()
     // }
 
-    this.start()
-    this.initializeMiddleware()
-    this.setupControllers()
-
-    // const server = http.createServer(this.app)
-
-    // if (!sticky.listen(server, listenPort)) {
-
-    //   server.once('listening', () => {
-    //     Logger.Info(`Portfolioapis listening on port ${listenPort}`)
-    //   })
-
-    // } else {
-    //   this.start()
-    //   this.initializeMiddleware()
-    //   this.setupControllers()
-    // }
   }
 
   private initializeMiddleware(): void {
@@ -80,10 +60,12 @@ export class PortfolioServer extends Server {
 
     const upload = multer({ storage: storage })
 
+    this.app.use(helmet())
     this.app.use(upload.any())
 
     this.app.use(compression())
     this.app.use(express.static('thumbnails'))
+    this.app.use(express.static('assets'))
     this.app.disable('x-powered-by')
     this.app.use(bodyParser.json())
     this.app.use(bodyParser.urlencoded({ extended: true }))
@@ -128,18 +110,24 @@ export class PortfolioServer extends Server {
 
   private start(): void {
     const webListenPort = process.env.PORT || 3000
-    const ioPort = 3434
     const server = http.createServer(this.app)
-
     const socket = require('socket.io')(server)
     
     server.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
     
     // const io: SocketIO.Server = createSocketServer(ioPort, { controllers: [MeetingsSocketController] })
 
-    Logger.Info(`Socket IO Server Listening on Port ${ioPort}`)
-
     useSocketServer(socket, { controllers: [MeetingsSocketController] })
 
+    setInterval(() => {
+      http.get('http://meetily.herokuapp.com')
+      Logger.Info('GET request to meetily sent')
+
+      http.get('http://mindfulmeals.herokuapp.com')
+      Logger.Info('GET request to mindfulmeals sent')
+
+      http.get('http://coolshare.herokuapp.com')
+      Logger.Info('GET request to coolshare sent')
+    }, 300000)
   }
 }
