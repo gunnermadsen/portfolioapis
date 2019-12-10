@@ -4,10 +4,10 @@
 
 ### Each of following projects uses my service in some capacity:
 
-[Gunner Madsen's Portfolio] (https://www.gunner.madsen.com)
-[Shareily] (https://www.shareily.com)
-[MindfulMeals] (https://www.mindfulmeals.portfolioapps.com)
-[Meetilly] (https://www.meetilly.com)
+[Gunner Madsen Portfolio](https://www.gunner.madsen.com)
+[Shareily](https://www.shareily.com)
+[Meetilly](https://www.meetilly.com)
+[MindfulMeals](https://www.mindfulmeals.portfolioapps.com)
 
 ## Running the Server
 
