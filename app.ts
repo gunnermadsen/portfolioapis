@@ -77,7 +77,8 @@ export class PortfolioServer extends Server {
         'https://gunner-madsen.com',
         'https://coolshare.herokuapp.com',
         'https://www.shareily.com',
-        'https://mindfulmeals.herokuapp.com'
+        'https://mindfulmeals.herokuapp.com',
+        'https://meetily.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
       allowedHeaders: ['Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'],
@@ -121,13 +122,8 @@ export class PortfolioServer extends Server {
 
     setInterval(() => {
       http.get('http://meetily.herokuapp.com')
-      Logger.Info('GET request to meetily sent')
-
       http.get('http://mindfulmeals.herokuapp.com')
-      Logger.Info('GET request to mindfulmeals sent')
-
       http.get('http://coolshare.herokuapp.com')
-      Logger.Info('GET request to coolshare sent')
     }, 300000)
   }
 }

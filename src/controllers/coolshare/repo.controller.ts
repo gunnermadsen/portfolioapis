@@ -49,7 +49,7 @@ export class RepositoryController {
             const entities = await filesModel.find({ UserId: id })
 
             const result = {
-                result: entities[0].Files.length ? entities[0].Files : [{ Name: "No contents to display", Id: uuid.v4() }],
+                result: entities[0].Files.length ? entities[0].Files : [], //{ Name: "No contents to display", Cwd: path, Id: uuid.v4() }
 
                 settings: {
                     isEmpty: entities[0].Files.length ? false : true,
