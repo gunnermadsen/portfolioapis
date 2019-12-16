@@ -27,6 +27,10 @@ export class MeetingsSocketController {
         // This will ensure that the correct ICE candidate informaiton reaches its intended destination, 
         // and will help prevent errors while attempting to add ice candidates on the client.
 
+        if (message.mode === 'hangup' && this.standbyClients[message.meetingId].length >= 2) {
+            this.standbyClients[message.meetingId] = []
+        }
+
         socket.broadcast.to(message.roomId).emit('signal', message)
     }
     
