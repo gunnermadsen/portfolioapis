@@ -1,13 +1,13 @@
 import { EntityTypes } from "./entity.type";
 
 export interface IEntity {
-    originalName: string
-    cwd: string
-    path: string
-    id: string
-    absPath: string
-    type: EntityTypes.Folder | EntityTypes.File
-    meta: { invitees: string[], owner: string, readOnly: boolean }
-    icon?: string
-    isShared: boolean
+    Name: string
+    Cwd: string
+    Path: string
+    Id: string
+    AbsPath: string
+    Type: EntityTypes.Folder | EntityTypes.File
+    Meta: { invitees: string[], owner: string, permission: boolean }
+    Icon?: string
+    IsShared: boolean
 }

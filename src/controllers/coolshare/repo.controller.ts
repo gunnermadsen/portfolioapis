@@ -77,7 +77,7 @@ export class RepositoryController {
         const folderData: any = request.body.data
         const cwd: string = path.join(__dirname, 'repository', userId, request.body.path, folderData.FolderName)
 
-        let metadata: { invitees: string[], owner: string, readOnly: boolean } = null
+        let metadata: { invitees: string[], owner: string, permission: boolean } = null
         let isShared: boolean = false
         let thumbnail: string = 'folder.png'
 
@@ -88,31 +88,31 @@ export class RepositoryController {
         if (folderData.Accessibility === 1) {
             metadata = { 
                 invitees: folderData.Invitees, 
-                owner: folderData.FolderName,
-                readOnly: folderData.isReadOnly
+                owner: request.body.userName,
+                permission: folderData.Permissions
             }
             isShared = true
             thumbnail = 'share-folder.png'
         }
 
-        fs.mkdir(cwd, 0o755, (error: any) => {
+        fs.mkdir(cwd, 0o755, async (error: any) => {
             if (error) {
                 return response.status(500).end()
             }
             else {
                 const entity = {
-                    originalName: folderData.FolderName,
-                    cwd: request.body.path,
-                    path: path.join(request.body.path, folderData.FolderName),
-                    id: userId,
-                    absPath: cwd,
-                    type: EntityTypes.Folder,
-                    meta: metadata,
-                    isShared: isShared,
-                    icon: thumbnail
+                    Name: folderData.FolderName,
+                    Cwd: request.body.path,
+                    Path: path.join(request.body.path, folderData.FolderName),
+                    Id: userId,
+                    AbsPath: cwd,
+                    Type: EntityTypes.Folder,
+                    Meta: metadata,
+                    IsShared: isShared,
+                    Icon: thumbnail
                 }
 
-                this.createEntity(entity)
+                await this.createEntity(entity)
 
                 return response.status(204).end()
 
@@ -161,14 +161,14 @@ export class RepositoryController {
                     // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
 
                     this.createEntity({ 
-                        originalName: request.files[0].originalname, 
-                        cwd: request.body.path, 
-                        path: path.join(request.body.path, request.files[0].originalname),
-                        id: request.body.userId, 
-                        absPath: cwd, 
-                        type: EntityTypes.File,
-                        isShared: false,
-                        meta: null
+                        Name: request.files[0].originalname, 
+                        Cwd: request.body.path, 
+                        Path: path.join(request.body.path, request.files[0].originalname),
+                        Id: request.body.userId, 
+                        AbsPath: cwd, 
+                        Type: EntityTypes.File,
+                        IsShared: false,
+                        Meta: null
                     })
 
                     return response.status(204).end()
@@ -402,32 +402,26 @@ export class RepositoryController {
         try {
 
             // check for a duplicate
-            const duplicate = await filesModel.find({ UserId: payload.id }, { Files: { $elemMatch: { Path: payload.path } } })
+            const duplicate = await filesModel.find({ UserId: payload.Id }, { Files: { $elemMatch: { Path: payload.Path } } })
 
             if (duplicate[0].Files) {
-                const result = await filesModel.update({ UserId: payload.id }, { $pull: { Files: { Name: payload.originalName } } })
+                const result = await filesModel.update({ UserId: payload.Id }, { $pull: { Files: { Name: payload.Name } } })
             }
 
-            const stats = await fs.stat(payload.absPath)
+            const stats = await fs.stat(payload.AbsPath)
 
             const entity: IFile = {
+                ...payload,
                 Id: uuid.v4(),
-                Name: payload.originalName,
-                Type: payload.type,
                 Size: stats.size,
-                Cwd: payload.cwd,
-                Path: payload.path,
-                ThumbnailPath: payload.type === EntityTypes.File ? `/${payload.id}/${path.parse(payload.originalName).name}.png` : payload.icon,
+                ThumbnailPath: payload.Type === EntityTypes.File ? `/${payload.Id}/${path.parse(payload.Name).name}.png` : payload.Icon,
                 IsFavorite: false,
-                IsShared: payload.isShared,
                 CreatedOn: new Date(),
                 EditedOn: new Date(),
-                ShareData: payload.meta,
-                MetaData: payload.meta
             }
 
             await filesModel.updateOne(
-                { UserId: payload.id },
+                { UserId: payload.Id },
                 { $push: { Files: entity } }
             )
 
