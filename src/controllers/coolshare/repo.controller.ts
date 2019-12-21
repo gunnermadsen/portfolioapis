@@ -46,16 +46,7 @@ export class RepositoryController {
 
         try {
 
-            const entities = await filesModel.find({ UserId: id })
-
-            const result = {
-                result: entities[0].Files.length ? entities[0].Files : [], //{ Name: "No contents to display", Cwd: path, Id: uuid.v4() }
-
-                settings: {
-                    isEmpty: entities[0].Files.length ? false : true,
-                    cwd: path
-                }
-            }
+            const result = this.readContents(request, response, id, path)
 
             return response.status(200).json(result)
 
@@ -88,7 +79,7 @@ export class RepositoryController {
         if (folderData.Accessibility === 1) {
             metadata = { 
                 invitees: folderData.Invitees, 
-                owner: request.body.userName,
+                owner: folderData.UserName,
                 permission: folderData.Permissions
             }
             isShared = true
@@ -375,26 +366,37 @@ export class RepositoryController {
     }
 
     @Post('verify')
-    private verifyLink(request: Request, response: Response) {
+    private async verifyLink(request: Request, response: Response) {
 
         const { shareName, userName } = request.body
 
-        this.validateShareUri(shareName, userName).then((share: any) => {
-            if (share.status) {
-                const folder = path.join(share.data.UserId, share.data.ShareName)
+        if (!shareName && !userName) {
+            return response.status(400).end()
+        }
 
-                response['user']._id = share.data.UserId
+        try {
+            const share = await this.validateShareUri(shareName, userName)
 
-                this.getRepository(request, response)
+            if (!share.status) {
+                return response.status(404).end()
             }
-            else {
-                return response.status(404).json({ message: "We could not find the resource you specified" })
-            }
-        })
-        .catch((error: any) => {
-            return response.status(500).json({ message: error })
-        })
 
+            const entity = share.data[0]
+
+            const contents = await this.readContents(request, response, entity.UserId, entity.Files.Path)
+
+            const files = contents.result.filter((file: any) => file.Path === entity.Files.Path)
+
+            return response.status(200).json({ 
+                files: files,
+                userId: entity.UserId,
+                userName: entity.Files.Meta.owner,
+                settings: contents.settings
+            })
+
+        } catch (error) {
+            return response.status(500).end()
+        }
     }
 
     private async createEntity(payload: IEntity): Promise<void | Request> {
@@ -509,18 +511,36 @@ export class RepositoryController {
     //     }
     // }
 
+    private async readContents(request: Request, response: Response, id: string, path: string): Promise<any> {
+        try {
+            const entities = await filesModel.find({ UserId: id })
+
+            const result = {
+                result: entities[0].Files.length ? entities[0].Files : [], //{ Name: "No contents to display", Cwd: path, Id: uuid.v4() }
+
+                settings: {
+                    isEmpty: entities[0].Files.length ? false : true,
+                    cwd: path
+                }
+            }
+            return result
+
+        } catch (error) {
+            return response.status(500).end()
+        }
+    }
+
     private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
 
         try {
-            let resource: IShare = {
-                ShareName: shareName
-            }
-
-            if (userName) {
-                resource.UserName = userName
-            }
-
-            const share = await sharedFolderModel.findOne(resource)
+            const share = await filesModel.aggregate([
+                { $unwind: { path: "$Files" } },
+                { $match: { 
+                    "Files.Name": shareName,
+                    "Files.Meta.owner": userName,
+                    "Files.IsShared": true
+                } }
+            ])
 
             const result: any = {
                 data: share,
