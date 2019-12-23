@@ -46,7 +46,7 @@ export class RepositoryController {
 
         try {
 
-            const result = this.readContents(request, response, id, path)
+            const result = await this.readContents(request, response, id, path)
 
             return response.status(200).json(result)
 
@@ -158,8 +158,9 @@ export class RepositoryController {
                         Id: request.body.userId, 
                         AbsPath: cwd, 
                         Type: EntityTypes.File,
+                        Meta: null,
                         IsShared: false,
-                        Meta: null
+                        Icon: `${path.parse(request.files[0].originalname).name}.png`
                     })
 
                     return response.status(204).end()
