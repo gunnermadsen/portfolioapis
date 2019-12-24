@@ -6,7 +6,7 @@ import * as async from 'async'
 import * as path from 'path'
 import * as mime from 'mime'
 import * as uuid from 'uuid'
-
+import * as archiver from 'archiver'
 // import * as quicklookThumbnail from 'quicklook-thumbnail'
 // import * as prettyIcon from 'pretty-file-icons'
 
@@ -27,6 +27,7 @@ import { IShare } from '../../models/share.model'
 import { IEntity } from '../../models/entity.model'
 
 import { LogInterceptorController } from '../../middleware/log.interceptor';
+import { Logger } from '@overnightjs/logger'
 
 const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders)
 const filesModel = new Files().getModelForClass(Files)
@@ -229,17 +230,77 @@ export class RepositoryController {
 
     @Get('download')
     // @Middleware(JwtInterceptor.checkJWTToken)
-    private downloadItem(request: Request, response: Response) {
+    public downloadItem(request: Request, response: Response): void {
 
-        const dir = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource)
+        let resource: string
+        let entityPath: string
 
-        const mimeType = mime.getType(request.query.resource)
+        const prepareAndSendDownload = (resource, dir) => {
+            const mimeType = mime.getType(resource)
 
-        response.setHeader('Content-Type', mimeType)
-        response.setHeader('Content-Transfer-Encoding', 'binary')
-        response.setHeader('Content-disposition', `attachment filename=${request.query.resource}`)
+            response.setHeader('Content-Type', mimeType)
+            response.setHeader('Content-Transfer-Encoding', 'binary')
+            response.setHeader('Content-disposition', `attachment filename=${resource}`)
 
-        response.download(dir)
+            response.download(dir)
+        }
+
+        switch (request.query.type) {
+            case "Folder":
+                resource = `${request.query.resource}.zip`
+ 
+                const outputFolderPath = path.join(__dirname, 'temp', request.query.id)
+                const inputFolderPath = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource)
+
+                entityPath = path.join(outputFolderPath, resource)
+
+                fs.mkdir(outputFolderPath, (error: NodeJS.ErrnoException) => {
+                    if (error) {
+                        return response.status(500).json(error)
+                    } else {
+                        const output = fs.createWriteStream(entityPath)
+
+                        const archive = archiver('zip', { zlib: { level: 9 } })
+
+                        output.on('end', () => {
+                            return console.log("Data has been drained")
+                        })
+
+                        output.on('close', async () => {
+                            Logger.Info("Operation Completed")
+                            prepareAndSendDownload(resource, entityPath)
+                            await fs.remove(outputFolderPath)
+                        })
+
+                        archive.on('warning', (warning) => {
+                            if (warning.code === 'ENOENT') {
+                                console.warn(warning)
+                            } else {
+                                throw warning
+                            }
+                        })
+                        archive.on('error', (error) => {
+                            throw error
+                        })
+                        archive.on('progress', (progress: archiver.ProgressData) => {
+                            console.log(Math.floor(progress.entries.processed / progress.entries.total * 100), '%')
+                        })
+
+                        archive.pipe(output)
+
+                        archive.directory(`${inputFolderPath}/`, false) //request.query.resource
+                        archive.finalize()
+
+                    }
+                })
+                
+                break
+
+            case "File":
+                entityPath = path.join(__dirname, 'repository', request.query.id, request.query.path, request.query.resource)
+                prepareAndSendDownload(request.query.resource, entityPath)
+                break
+        }
                 
     }
 
@@ -434,6 +495,16 @@ export class RepositoryController {
             return response.status(500).end()
 
         } 
+    }
+
+    private prepareAndSendDownload(resource: string, dir: string): void {
+        const mimeType = mime.getType(resource)
+
+        response.setHeader('Content-Type', mimeType)
+        response.setHeader('Content-Transfer-Encoding', 'binary')
+        response.setHeader('Content-disposition', `attachment filename=${resource}`)
+
+        response.download(dir)
     }
 
 
