@@ -177,7 +177,7 @@ export class RepositoryController {
 
         const entities = request.body.entities
 
-        const userId: string = request.body.id
+        const userId: string = request.body.userId
         
         if (!entities) response.status(400).end()
 
