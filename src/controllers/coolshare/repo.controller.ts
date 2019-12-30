@@ -7,6 +7,7 @@ import * as path from 'path'
 import * as mime from 'mime'
 import * as uuid from 'uuid'
 import * as archiver from 'archiver'
+import * as filepreview from 'filepreview-es6'
 // import * as quicklookThumbnail from 'quicklook-thumbnail'
 // import * as prettyIcon from 'pretty-file-icons'
 
@@ -150,7 +151,7 @@ export class RepositoryController {
                     
                     cmd.run(`rm -rf ./uploads/${request.files[0].originalname.replace(/ /g, '\\\ ')}`)
 
-                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
 
                     this.createEntity({ 
                         Name: request.files[0].originalname, 
@@ -508,25 +509,47 @@ export class RepositoryController {
     }
 
 
-    // private createThumbnailFromFile(source: string, id: string, file: string): void {
+    private async createThumbnailFromFile(source: string, id: string, file: string): Promise<void> {
 
-    //     let destination = path.resolve('thumbnails', id) 
+        const deleteFolder = async () => await fs.remove(tempDir)
 
-    //     try {
+        let destination = `${path.resolve('thumbnails', id)}/${path.parse(file).name}.png`
+        const tempDir = path.join(__dirname, 'temp', id)
 
-    //          if (process.env.NODE_ENV === 'development') {
-    //              this.createThumbnailInDevelopment(source, file, destination)
-    //          }
-    //          return
-    //         //  else {
-    //         //      this.createThumbnailInProduction(source, destination, file)
-    //         //  }
-    //     } 
-    //     catch (error) {
-    //         console.log(error)
-    //         return 
-    //     }
-    // }
+        try {
+            await fs.mkdir(tempDir)
+
+            const options = {
+                // width: 200,
+                // height: 200,
+                quality: 100,
+                // flatten: true,
+                background: '#fff',
+                // pagerange: '1-3'
+                pdf: false,
+                keepAspect: true,
+                pdf_path: tempDir
+            }
+
+            await filepreview
+                .generateAsync(source, destination, options)
+                // .then(result => {
+                //     return console.log("Operation Successful")
+                // })
+                // .catch(error => {
+                //     return console.error(error)
+                // })
+
+            deleteFolder()
+
+        } catch (error) {
+
+            deleteFolder()
+            console.log(error)
+            // TODO: set a default image 
+            return 
+        }
+    }
 
     // private createThumbnailInProduction(source: string, destination: string, file: string): void {
 

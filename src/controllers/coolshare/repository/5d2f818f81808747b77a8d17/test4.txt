@@ -1,0 +1,65 @@
+Become a member
+Sign in
+Get started
+fs.readFile vs streams to read text files in node.js
+Duncan Grant
+Duncan Grant
+Follow
+Aug 22, 2017 · 3 min read
+The de facto standard of reading text files in node.js is to use fs.readFile(filename, “utf8"). It’s quick and simple to write code using this function — we just tell node.js to open a text file for us and in the callback we get a great big string of text, upon which we can use all kinds of javascript string wizardry.
+For quick prototypes, or if we’re just dealing with small text files, this approach is completely fine. However, if there is a chance that other people might use our code, or that it may at some point be run on text files of varying sizes, we may as well optimize our code and consider using streams instead.
+Streams allow us to keep data held in memory to a minimum, thus making reading a file that much quicker. They also allow us to pick and choose which parts of the file we want to process and leave the rest of the data unopened.
+I was interested in the trade off between the ease-of-use of fs.readFile and the faster run-time of streams. At what file size does it make sense to refactor use of readFile and instead use streams?
+I devised a simple test: create dummy data CSVs of various sizes and compare the time taken to extract the headers of these CSVs by 2 methods, one fs.readFile and one stream-based.
+The first step is to use node.js to create some CSVs of various lengths:
+
+Running node makedata.js will create 4 files with varying numbers of rows.
+The next step is to run our 2 methods to read the headers of the CSV files:
+
+The method read1 uses fs.readFile and to read in the entire contents of each CSV and then return the first line (the header). The next method read2 uses streams to read in data from the CSV file and then returns the header.
+The default setting in node.js for createReadStream is to read the file in 16KB chunks at a time. As soon as we have read the first chunk, we get the header of that string and then immediately destroy the stream so that it does not read any more chunks. This allows us to have fast performance no matter how big the file size is.
+And here is the comparison for reading in CSVs of various sizes, ranging from 164KB to 160MB in size (x-axis is lines of CSV/file size, y-axis is the time taken for the relevant function of read.js to read the header):
+
+As you can see, the stream method remains largely flat and fast, whereas the readFile method starts to increase noticeably as we approach ~16MB in file size.
+TLDR: my suggestion is once you are planning on dealing with text files of greater size than around 10MB, it’s best to ditch readFile and start using streams instead.
+There is one other thing to mention that the astute observer may have noticed: using a stream seems to be slightly faster when dealing with the 100000 lines file when compared to the smaller file sizes. I ran the code multiple times and still got the same result. Why is this? My guess is that it has something to do with the way the createReadStream splits the file into chunks. If anyone has a better idea, then let me know!
+866
+Nodejs
+JavaScript
+866 claps
+
+Duncan Grant
+WRITTEN BY
+
+Duncan Grant
+Follow
+JavaScript developer & data visualiser.
+See responses (3)
+More From Medium
+More from Duncan Grant
+Doing something with Web Components
+Duncan Grant
+Duncan Grant
+Nov 1, 2018 · 6 min read
+518
+Related reads
+Threads in Node 10.5.0: a practical intro
+Fernando Doglio
+Fernando Doglio in DailyJS
+Jun 21, 2018 · 5 min read
+6.3K
+Related reads
+Joi for Node: Exploring Javascript Object Schema Validation
+Ross Bulat
+Ross Bulat
+Oct 27, 2018 · 10 min read
+859
+Discover Medium
+Welcome to a place where words matter. On Medium, smart voices and original ideas take center stage - with no ads in sight. Watch
+Make Medium yours
+Follow all the topics you care about, and we’ll deliver the best stories for you to your homepage and inbox. Explore
+Become a member
+Get unlimited access to the best stories on Medium — and support writers while you’re at it. Just $5/month. Upgrade
+About
+Help
+Legal
