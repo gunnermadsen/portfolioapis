@@ -7,7 +7,7 @@ import * as path from 'path'
 import * as mime from 'mime'
 import * as uuid from 'uuid'
 import * as archiver from 'archiver'
-import * as filepreview from 'filepreview-es6'
+// import * as filepreview from 'filepreview-es6'
 // import * as quicklookThumbnail from 'quicklook-thumbnail'
 // import * as prettyIcon from 'pretty-file-icons'
 
@@ -17,7 +17,7 @@ import { Request, Response, response } from 'express'
 
 // import { Thumbnail } from 'thumbnail'
 
-import * as Thumbnail from 'thumbnail'
+// import * as Thumbnail from 'thumbnail'
 
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core'
 import { JwtInterceptor } from '../../middleware/jwt.interceptor'
@@ -151,7 +151,7 @@ export class RepositoryController {
                     
                     cmd.run(`rm -rf ./uploads/${request.files[0].originalname.replace(/ /g, '\\\ ')}`)
 
-                    this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
 
                     this.createEntity({ 
                         Name: request.files[0].originalname, 
@@ -533,8 +533,8 @@ export class RepositoryController {
                 pdf_path: tempDir
             }
 
-            await filepreview
-                .generateAsync(source, destination, options)
+            // await filepreview
+            //     .generateAsync(source, destination, options)
                 // .then(result => {
                 //     return console.log("Operation Successful")
                 // })
