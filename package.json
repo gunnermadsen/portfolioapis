@@ -26,7 +26,7 @@
     "wp:start": "node --inspect dist/main.js"
   },
   "engines": {
-    "node": "12.8.0",
+    "node": "10.8.0",
     "npm": "6.13.4"
   },
   "jest": {
@@ -89,6 +89,7 @@
     "morgan": "^1.9.1",
     "multer": "^1.4.1",
     "node-cmd": "^3.0.0",
+    "node-gyp": "^5.0.7",
     "path": "^0.12.7",
     "pretty-file-icons": "^2.2.1",
     "reflect-metadata": "^0.1.13",
