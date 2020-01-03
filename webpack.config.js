@@ -10,7 +10,7 @@ const devtool = isProduction ? false : 'inline-source-map';
 
 module.exports = {
     entry: ['webpack/hot/poll?100', './start.ts'],
-    watch: true,
+    watch: isProduction ? true : false,
     target: 'node',
     devtool: devtool,
     mode: mode,
