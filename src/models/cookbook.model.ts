@@ -1,6 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class Recipes extends Typegoose {
+export class Recipes {
     @prop() 
     public calories: any;
     
@@ -38,3 +38,5 @@ export class Recipes extends Typegoose {
     public totalNutrients: any;
 
 }
+
+export const recipesModel = getModelForClass(Recipes);

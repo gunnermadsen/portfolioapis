@@ -8,10 +8,11 @@
     ],
     "compilerOptions": {
         "outDir": "./dist",
+        "incremental": true,
         "sourceMap": true,
+        "declaration": true,
         "checkJs": true,
         "allowJs": true,
-        "declaration": false,
         "module": "commonjs",
         "moduleResolution": "node",
         "emitDecoratorMetadata": true,

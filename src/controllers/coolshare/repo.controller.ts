@@ -7,7 +7,7 @@ import * as path from 'path'
 import * as mime from 'mime'
 import * as uuid from 'uuid'
 import * as archiver from 'archiver'
-// import * as filepreview from 'filepreview-es6'
+import * as filepreview from 'filepreview-es6'
 // import * as quicklookThumbnail from 'quicklook-thumbnail'
 // import * as prettyIcon from 'pretty-file-icons'
 
@@ -15,23 +15,16 @@ import * as archiver from 'archiver'
 
 import { Request, Response, response } from 'express'
 
-// import { Thumbnail } from 'thumbnail'
-
-// import * as Thumbnail from 'thumbnail'
-
 import { Controller, Post, ClassMiddleware, Middleware, Get } from '@overnightjs/core'
 import { JwtInterceptor } from '../../middleware/jwt.interceptor'
-import { SharedFolders } from '../../models/shared-folder.model'
-import { Files, IFile } from '../../models/files.model'
+import { Files, IFile, filesModel } from '../../models/files.model'
 import { EntityTypes } from '../../models/entity.type'
-import { IShare } from '../../models/share.model'
 import { IEntity } from '../../models/entity.model'
 
 import { LogInterceptorController } from '../../middleware/log.interceptor';
 import { Logger } from '@overnightjs/logger'
+import { getModelForClass } from '@typegoose/typegoose'
 
-const sharedFolderModel = new SharedFolders().getModelForClass(SharedFolders)
-const filesModel = new Files().getModelForClass(Files)
 
 
 @Controller('api/repo')
@@ -40,7 +33,7 @@ export class RepositoryController {
 
     @Get('')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async getRepository(request: Request, response: Response): Promise<Response | void> {
+    public async getRepository(request: Request, response: Response): Promise<Response | void> {
 
         const { id, path } = request.query
         
@@ -64,7 +57,7 @@ export class RepositoryController {
 
     @Post('create') // /:folder*?/:data*?
     @Middleware(JwtInterceptor.checkJWTToken)
-    private createNewFolder(request: Request, response: Response): Response | void {
+    public createNewFolder(request: Request, response: Response): Response | void {
 
         const userId = response['user']._id
         const folderData: any = request.body.data
@@ -117,7 +110,7 @@ export class RepositoryController {
 
     @Post('upload')
     // @Middleware(JwtInterceptor.checkJWTToken)
-    private uploadFile(request: Request, response: Response): Response {
+    public uploadFile(request: Request, response: Response): Response {
 
         if (!request.files[0]) {
             return response.status(404).json({ message: "No Files were present during upload" })
@@ -143,7 +136,7 @@ export class RepositoryController {
 
             const cwd = path.join(__dirname, 'repository', request.body.userId, request.body.path, request.files[0].originalname)
 
-            nodefs.writeFile(cwd, result[0], (error: any) => {
+            nodefs.writeFile(cwd, result[0], async (error: any) => {
                 if (error) {
                     return response.status(400).json({ message: "An error occured when writing the file to the folder", error: error })
                 }
@@ -151,9 +144,8 @@ export class RepositoryController {
                     
                     cmd.run(`rm -rf ./uploads/${request.files[0].originalname.replace(/ /g, '\\\ ')}`)
 
-                    // this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
+                    await this.createThumbnailFromFile(cwd, request.body.userId, request.files[0].originalname)
 
-                    
                     this.createEntity({ 
                         Name: request.files[0].originalname, 
                         Cwd: request.body.path, 
@@ -175,7 +167,7 @@ export class RepositoryController {
 
     @Post('delete')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private deleteItem(request: Request, response: Response) {
+    public deleteItem(request: Request, response: Response) {
 
         const entities = request.body.entities
 
@@ -308,7 +300,7 @@ export class RepositoryController {
 
     @Post('favorite')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async modifyFavorites(request: Request, response: Response): Promise<Response | void> {
+    public async modifyFavorites(request: Request, response: Response): Promise<Response | void> {
 
         try {
             const { fileId, userId, state } = request.body
@@ -338,7 +330,7 @@ export class RepositoryController {
 
     @Post('rename')
     // @Middleware(JwtInterceptor.checkJWTToken)
-    private async renameEntity(request: Request, response: Response): Promise<Response | void> {
+    public async renameEntity(request: Request, response: Response): Promise<Response | void> {
 
         const { userId, entity, cwd } = request.body
 
@@ -430,7 +422,7 @@ export class RepositoryController {
     }
 
     @Post('verify')
-    private async verifyLink(request: Request, response: Response) {
+    public async verifyLink(request: Request, response: Response) {
 
         const { shareName, userName } = request.body
 
@@ -463,7 +455,7 @@ export class RepositoryController {
         }
     }
 
-    private async createEntity(payload: IEntity): Promise<void | Request> {
+    public async createEntity(payload: IEntity): Promise<void | Request> {
 
         try {
 
@@ -499,7 +491,7 @@ export class RepositoryController {
         } 
     }
 
-    private prepareAndSendDownload(resource: string, dir: string): void {
+    public prepareAndSendDownload(resource: string, dir: string): void {
         const mimeType = mime.getType(resource)
 
         response.setHeader('Content-Type', mimeType)
@@ -510,17 +502,16 @@ export class RepositoryController {
     }
 
 
-    private async createThumbnailFromFile(source: string, id: string, file: string): Promise<void> {
+    public async createThumbnailFromFile(source: string, id: string, file: string): Promise<void> {
 
-        const deleteFolder = async () => await fs.remove(tempDir)
+        const deleteFolder = async (dir) => await fs.remove(dir)
 
         let destination = `${path.resolve('thumbnails', id)}/${path.parse(file).name}.png`
         const tempDir = path.join(__dirname, 'temp', id)
 
         try {
-
             
-            await fs.mkdir(tempDir)
+            // await fs.mkdir(tempDir)
 
             const options = {
                 // width: 200,
@@ -534,27 +525,22 @@ export class RepositoryController {
                 pdf_path: tempDir
             }
 
-            // await filepreview
-            //     .generateAsync(source, destination, options)
-                // .then(result => {
-                //     return console.log("Operation Successful")
-                // })
-                // .catch(error => {
-                //     return console.error(error)
-                // })
+            filepreview
+                .generateAsync(source, destination, options)
+                .then(result => console.log("Operation Successful", result))
+                .catch(error => console.error(error))
 
-            deleteFolder()
+            // await deleteFolder(tempDir)
 
         } catch (error) {
-
-            deleteFolder()
+            // deleteFolder(tempDir)
             console.log(error)
             // TODO: set a default image 
             return 
         }
     }
 
-    // private createThumbnailInProduction(source: string, destination: string, file: string): void {
+    // public createThumbnailInProduction(source: string, destination: string, file: string): void {
 
     //     let thumbnail = new Thumbnail(source, destination)
 
@@ -568,7 +554,7 @@ export class RepositoryController {
     //     })
     // }
 
-    // private createThumbnailInDevelopment(source: string, file: string, destination: string): void {
+    // public createThumbnailInDevelopment(source: string, file: string, destination: string): void {
 
     //     const options = {
     //         size: 256,
@@ -585,7 +571,7 @@ export class RepositoryController {
     //     })
     // }
 
-    // private async createThumbnailFromSvg(destination: string, file: string): Promise<void> {
+    // public async createThumbnailFromSvg(destination: string, file: string): Promise<void> {
     //     const icon = prettyIcon.getIcon(file, 'svg')
 
     //     const sourcePath = path.resolve('node_modules/pretty-file-icons/svg', icon)
@@ -609,7 +595,7 @@ export class RepositoryController {
     //     }
     // }
 
-    private async readContents(request: Request, response: Response, id: string, path: string): Promise<any> {
+    public async readContents(request: Request, response: Response, id: string, path: string): Promise<any> {
         try {
             const entities = await filesModel.find({ UserId: id })
 
@@ -628,7 +614,7 @@ export class RepositoryController {
         }
     }
 
-    private async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
+    public async validateShareUri(shareName: string, userName?: string): Promise<Response | any> {
 
         try {
             const share = await filesModel.aggregate([

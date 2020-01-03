@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
-import { Recipes } from '../../models/cookbook.model';
-import { Controller, Post, ClassMiddleware, Middleware, Get, Put, Delete, Patch } from '@overnightjs/core';
+import { recipesModel } from '../../models/cookbook.model';
+import { Controller, Post, Middleware, Get, Put, Delete } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import * as crypto from 'crypto';
-import { PantryItems } from '../../models/pantry.model';
+import { pantryModel } from '@models/pantry.model';
 
-
-let pantryModel = new PantryItems().getModelForClass(PantryItems);
-let recipesModel = new Recipes().getModelForClass(Recipes);
 
 @Controller('api/kitchen')
 export class KitchenController {

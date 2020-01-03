@@ -8,7 +8,7 @@ module.exports = {
     entry: ['webpack/hot/poll?100', './start.ts'],
     watch: true,
     target: 'node',
-    devtool: "source-map",
+    // devtool: "source-map",
     mode: 'development',
     externals: [
         nodeExternals({
@@ -22,14 +22,14 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /.ts?$/,
+                test: /.tsx?$/,
                 use: 'ts-loader',
-                exclude: [ /node_modules/ ],
+                exclude: /node_modules/,
             },
         ],
     },
     resolve: {
-        extensions: ['.ts', '.js'],
+        extensions: ['.ts', '.tsx', '.js'],
         plugins: [
             new TsconfigPathsPlugin({ configFile: './tsconfig.json' })
         ]
@@ -43,7 +43,7 @@ module.exports = {
         path: path.join(__dirname, 'dist'),
         filename: 'main.js',
     },
-    optimization: {
-        namedModules: true
-    }
+    // optimization: {
+    //     namedModules: true
+    // }
 };

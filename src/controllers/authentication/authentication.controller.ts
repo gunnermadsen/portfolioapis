@@ -1,36 +1,30 @@
 import { Request, Response } from 'express';
-import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cmd from 'node-cmd';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
-
-// import { OK, BAD_REQUEST } from 'http-status-codes';
-
 import { Controller, Middleware, Get, Post, Put, Delete, ClassMiddleware } from '@overnightjs/core';
-import { Logger } from '@overnightjs/logger';
-import { Notifications } from '../../models/notifications.model';
 import { LogInterceptorController } from '../../middleware/log.interceptor';
+import { userModel } from '../../models/authentication.model';
+import { notificationModel } from '../../models/notifications.model';
 
-const UserModel = new User().getModelForClass(User);
 
-const notificationModel = new Notifications().getModelForClass(Notifications)
 
 @Controller('api/users')
 @ClassMiddleware(LogInterceptorController.logNetworkRequest)
 export class UserController {
 
     @Post('login')
-    private async login(request: Request, response: Response): Promise<Response> {
+    public async login(request: Request, response: Response): Promise<Response> {
 
         const userName = request.body.UserName;
         const password = request.body.Password;
 
         try {
 
-            const user = await UserModel.findOne({ UserName: userName });
+            const user = await userModel.findOne({ UserName: userName });
 
             if (user) {
 
@@ -76,7 +70,7 @@ export class UserController {
     }
 
     @Post('register')
-    private async register(request: Request, response: Response): Promise<Response> {
+    public async register(request: Request, response: Response): Promise<Response> {
 
         const userName = request.body.UserName;
         const email = request.body.Email;
@@ -88,7 +82,7 @@ export class UserController {
 
         try {
 
-            const duplicate = await UserModel.find(
+            const duplicate = await userModel.find(
                 {
                     $or: [
                         { UserName: userName }, 
@@ -103,7 +97,7 @@ export class UserController {
                 });
             }
 
-            const user = new UserModel();
+            const user = new userModel();
 
             user.UserName = userName;
             user.Email = email;
@@ -115,7 +109,7 @@ export class UserController {
 
             user.Hash = user.setPassword(password);
 
-            const result = await UserModel.create(user);
+            const result = await userModel.create(user);
 
             if (result) {
 
@@ -150,7 +144,7 @@ export class UserController {
 
     @Get('logout')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private logout(request: Request, response: Response): Response {
+    public logout(request: Request, response: Response): Response {
         response.clearCookie("SESSIONID");
         response.clearCookie("XSRF-TOKEN");
         return response.status(200).json({ message: 'Logout Successful' });
@@ -160,10 +154,10 @@ export class UserController {
     @Get('')
     @Middleware(JwtInterceptor.checkJWTToken)
     // @Middleware([middleware1, middleware2])
-    private async getAll(request: Request, response: Response): Promise<Response | void> {
+    public async getAll(request: Request, response: Response): Promise<Response | void> {
 
         try {
-            const user = await UserModel.find({}).select('-hash');
+            const user = await userModel.find({}).select('-hash');
             return response.status(200).json({...user})
 
         } catch (error) {
@@ -174,11 +168,11 @@ export class UserController {
 
     @Get(':id')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async getById(request: Request, response: Response, id: string): Promise<Response | void> {
+    public async getById(request: Request, response: Response, id: string): Promise<Response | void> {
 
         try {
 
-            const user = await UserModel.findById(id).select('-hash');
+            const user = await userModel.findById(id).select('-hash');
 
             return response.status(200).json({ ...user });
 
@@ -193,15 +187,15 @@ export class UserController {
 
     @Put(':id')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async update(request: Request, response: Response, id: string, userParams: any): Promise<void> {
+    public async update(request: Request, response: Response, id: string, userParams: any): Promise<void> {
 
         try {
 
-            const user = await UserModel.findById(id);
+            const user = await userModel.findById(id);
     
             if (!user) throw 'User not found';
     
-            if (user.UserName !== userParams.UserName && await UserModel.findOne({ UserName: userParams.UserName })) {
+            if (user.UserName !== userParams.UserName && await userModel.findOne({ UserName: userParams.UserName })) {
                 throw + userParams.UserName + ' is already taken';
             }
     
@@ -225,9 +219,9 @@ export class UserController {
 
     @Delete('delete/:id')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async delete(request: Request, response: Response, id: string): Promise<void> {
+    public async delete(request: Request, response: Response, id: string): Promise<void> {
         try {
-            const result = await UserModel.findByIdAndRemove(id);
+            const result = await userModel.findByIdAndRemove(id);
 
             if (result) {
                 return response.status(200).end()

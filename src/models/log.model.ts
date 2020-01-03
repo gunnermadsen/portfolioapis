@@ -1,6 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class RequestLogs extends Typegoose {
+export class RequestLogs {
     @prop()
     public ip: string
 
@@ -43,3 +43,5 @@ export class RequestLogs extends Typegoose {
     @prop()
     public statusCode: number
 }
+
+export const requestLogModel = getModelForClass(RequestLogs)

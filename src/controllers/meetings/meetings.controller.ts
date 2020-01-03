@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
-import { Controller, Post, ClassMiddleware, Middleware, Get, Delete, Put } from '@overnightjs/core';
+import { Controller, Post, ClassMiddleware, Get } from '@overnightjs/core';
 
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
-import { Meeting } from '../../models/meeting.model';
+import { meetingModel } from '../../models/meeting.model';
 import { LogInterceptorController } from '../../middleware/log.interceptor';
 
-const meetingModel = new Meeting().getModelForClass(Meeting)
 
 @Controller('api/meetings')
 @ClassMiddleware([JwtInterceptor.checkJWTToken, LogInterceptorController.logNetworkRequest])

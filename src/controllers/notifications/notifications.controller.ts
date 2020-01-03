@@ -3,9 +3,10 @@ import { Request, Response } from 'express';
 import { Controller, Post, ClassMiddleware, Middleware, Get, Delete, Put } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 
-import { Notifications } from '../../models/notifications.model';
+import { Notifications, notificationModel } from '../../models/notifications.model';
+import { getModelForClass } from '@typegoose/typegoose';
+import { User } from '@models/authentication.model';
 
-const notificationModel = new Notifications().getModelForClass(Notifications);
 
 
 
@@ -16,7 +17,7 @@ export class NotificationController {
 
     @Get('')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async getNotifications(request: Request, response: Response) {
+    public async getNotifications(request: Request, response: Response) {
 
         const id = request.query.id;
 
@@ -41,7 +42,7 @@ export class NotificationController {
 
     @Post('create')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async createNotification(request: Request, response: Response) {
+    public async createNotification(request: Request, response: Response) {
 
         const userId = request.body.userId;
 
@@ -96,7 +97,7 @@ export class NotificationController {
 
     @Delete('deleteall/:id')
     @Middleware(JwtInterceptor.checkJWTToken)
-    private async deleteAllNotifications(request: Request, response: Response) {
+    public async deleteAllNotifications(request: Request, response: Response) {
 
         const id = request.params.id;
 

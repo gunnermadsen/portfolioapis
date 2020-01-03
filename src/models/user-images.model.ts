@@ -1,11 +1,6 @@
-import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from '@hasezoey/typegoose';
-import * as crypto from 'crypto'
-import * as jwt from 'jsonwebtoken';
-import * as fs from 'fs';
-import * as util from 'util';
-import { Request, Response } from 'express';
+import { prop } from '@typegoose/typegoose';
 
-export class UserImagesModel extends Typegoose {
+export class UserImagesModel {
     
     @prop()
     public ProfilePicture: any;

@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Logger } from '@overnightjs/logger';
 
-export class Database {
+export class DatabaseConnection {
 
     constructor() {
         this.connect();

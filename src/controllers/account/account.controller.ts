@@ -3,10 +3,11 @@ import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import { Request, Response } from 'express';
 import { User } from '../../models/authentication.model';
 import { UserImagesModel } from '../../models/user-images.model';
+import { getModelForClass } from '@typegoose/typegoose';
 
-const userModel = new User().getModelForClass(User);
+const userModel = getModelForClass(User);
 
-const userImagesModel = new UserImagesModel().getModelForClass(UserImagesModel);
+const userImagesModel = getModelForClass(UserImagesModel);
 
 
 @Controller('api/account')
@@ -14,7 +15,7 @@ const userImagesModel = new UserImagesModel().getModelForClass(UserImagesModel);
 export class AccountController {
 
     @Get('')
-    private async getAccountInfoByToken(request: Request, response: Response): Promise<Response> {
+    public async getAccountInfoByToken(request: Request, response: Response): Promise<Response> {
 
         try {
 
@@ -44,7 +45,7 @@ export class AccountController {
     }
 
     @Post('picture')
-    private async saveAccountPicture(request: Request, response: Response): Promise<Response> {
+    public async saveAccountPicture(request: Request, response: Response): Promise<Response> {
         
         try {
 
@@ -66,7 +67,7 @@ export class AccountController {
     }
 
     @Put(':id')
-    private async updateProfileInfo(request: Request, response: Response): Promise<Response> {
+    public async updateProfileInfo(request: Request, response: Response): Promise<Response> {
 
         const account = request.body;
 

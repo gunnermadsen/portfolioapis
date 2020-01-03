@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { RequestLogs } from '../models/log.model';
+import { requestLogModel } from '../models/log.model';
 
-const requestLogModel = new RequestLogs().getModelForClass(RequestLogs)
 
 export class LogInterceptorController {
 

@@ -1,9 +1,8 @@
-import { prop, Typegoose, ModelType, InstanceType, instanceMethod } from '@hasezoey/typegoose';
+import { prop, DocumentType, getModelForClass } from '@typegoose/typegoose';
 import * as crypto from 'crypto'
 import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
 import * as util from 'util';
-import { Request, Response } from 'express';
 
 const RSA_PUBLIC_KEY = fs.readFileSync('./.keys/public.key');
 const RSA_PRIVATE_KEY = fs.readFileSync('./.keys/private.key');
@@ -11,7 +10,7 @@ const RSA_PRIVATE_KEY = fs.readFileSync('./.keys/private.key');
 
 export const signJwt = util.promisify(jwt.sign);
 
-export class User extends Typegoose {
+export class User {
 
     @prop({ unique: true, required: true }) 
     public UserName: string;
@@ -40,21 +39,18 @@ export class User extends Typegoose {
     @prop()
     public ProfilePicture: string;
 
-    @instanceMethod
-    public setPassword(this: InstanceType<User>, Password: string) {
+    public setPassword(this: DocumentType<User>, Password: string) {
         this.Salt = crypto.randomBytes(16).toString('hex');
         this.Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
         return this.Hash;
     }
 
-    @instanceMethod
-    public validatePassword(this: InstanceType<User>, Password: string) {
+    public validatePassword(this: DocumentType<User>, Password: string) {
         let Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
         return this.Hash = Hash;
     }
 
-    @instanceMethod
-    public async generateSessionToken(this: InstanceType<User>): Promise<string> {
+    public async generateSessionToken(this: DocumentType<User>): Promise<string> {
 
         let expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
@@ -68,18 +64,18 @@ export class User extends Typegoose {
         return await jwt.sign(payload, RSA_PRIVATE_KEY, { algorithm: 'RS256'});
     }
 
-    @instanceMethod
-    public async verifySessionToken(this: InstanceType<User>, token: string) {
+    public async verifySessionToken(this: DocumentType<User>, token: string) {
 
         const payload = await jwt.verify(token, RSA_PUBLIC_KEY);
         return payload;
         
     }
 
-    @instanceMethod
-    public async generateCsrfToken(this: InstanceType<User>) {
+    public async generateCsrfToken(this: DocumentType<User>) {
         const payload = await crypto.randomBytes(32).toString('hex');
         return payload;
     }
 }
 
+
+export const userModel = getModelForClass(User);

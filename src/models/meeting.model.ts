@@ -1,6 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class Meeting extends Typegoose {
+export class Meeting {
 
     @prop({ unique: true }) 
     public UserId: string
@@ -18,3 +18,6 @@ export class Meeting extends Typegoose {
     public Description: string
     
 }
+
+
+export const meetingModel = getModelForClass(Meeting)

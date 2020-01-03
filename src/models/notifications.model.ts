@@ -1,6 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class Notifications extends Typegoose {
+export class Notifications {
     @prop()
     public Notifications: Notifications[];
 
@@ -11,3 +11,5 @@ export class Notifications extends Typegoose {
     public NotificationBadgeHidden: boolean;
 
 }
+
+export const notificationModel = getModelForClass(Notifications);

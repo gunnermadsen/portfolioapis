@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { Database } from './src/db/db.connection'
+import { DatabaseConnection } from './src/db/db.connection'
 
 import { Server } from '@overnightjs/core'
 import { Logger } from '@overnightjs/logger'
@@ -30,6 +30,8 @@ export class PortfolioServer extends Server {
     return this.app
   }
 
+  public httpServer: any
+
   constructor() {
 
     super(process.env.NODE_ENV === 'development')
@@ -43,7 +45,7 @@ export class PortfolioServer extends Server {
     //   cluster.fork()
 
     // } else {
-      this.start()
+      // this.start()
       this.initializeMiddleware()
       this.setupControllers()
     // }
@@ -97,7 +99,7 @@ export class PortfolioServer extends Server {
 
   private setupControllers(): void {
 
-    new Database()
+    new DatabaseConnection()
   
     const userController = new UserController()
     const repoController = new RepositoryController()
@@ -109,21 +111,21 @@ export class PortfolioServer extends Server {
     super.addControllers([ userController, repoController, kitchenController, accountController, notificationController, meetingsController ])
   }
 
-  private start(): void {
+  public start(): void {
     const webListenPort = process.env.PORT || 3000
-    const server = http.createServer(this.app)
-    const socket = require('socket.io')(server)
+    this.httpServer = http.createServer(this.app)
+    const socket = require('socket.io')(this.httpServer)
     
-    server.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
+    this.httpServer.listen(webListenPort, () => Logger.Info(`Portfolioapis listening on port ${webListenPort}`))
     
     // const io: SocketIO.Server = createSocketServer(ioPort, { controllers: [MeetingsSocketController] })
 
     useSocketServer(socket, { controllers: [MeetingsSocketController] })
 
-    setInterval(() => {
-      http.get('http://meetily.herokuapp.com')
-      http.get('http://mindfulmeals.herokuapp.com')
-      http.get('http://coolshare.herokuapp.com')
-    }, 300000)
+    // setInterval(() => {
+    //   http.get('http://meetily.herokuapp.com')
+    //   http.get('http://mindfulmeals.herokuapp.com')
+    //   http.get('http://coolshare.herokuapp.com')
+    // }, 300000)
   }
 }

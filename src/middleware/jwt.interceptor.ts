@@ -1,8 +1,9 @@
 import { User } from "../models/authentication.model";
 import { Request, Response } from 'express';
 import { NextFunction } from "express";
+import { getModelForClass } from "@typegoose/typegoose";
 
-const UserModel = new User().getModelForClass(User);
+const UserModel = getModelForClass(User);
 
 export class JwtInterceptor {
     public static checkJWTToken(request: Request, response: Response, next: NextFunction): Response {

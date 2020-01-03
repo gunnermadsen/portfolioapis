@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { User } from '../../models/authentication.model';
 import * as bcrypt from 'bcrypt';
+import { getModelForClass } from '@typegoose/typegoose';
 
 export async function register(request: Request, response: Response) {
 
-    const UserModel = new User().getModelForClass(User);
+    const UserModel = getModelForClass(User);
 
 
     const u = new UserModel({

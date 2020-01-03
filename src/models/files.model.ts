@@ -1,6 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class Files extends Typegoose {
+export class Files {
 
     @prop()
     public Files?: IFile[];
@@ -28,3 +28,5 @@ export interface IFile {
     EditedOn?: Date
 
 }
+
+export const filesModel = getModelForClass(Files)

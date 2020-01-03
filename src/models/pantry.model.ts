@@ -1,7 +1,6 @@
-import { prop, Typegoose } from '@hasezoey/typegoose';
-import { PantryCategories } from './pantry-categories.type';
+import { prop, getModelForClass } from '@typegoose/typegoose';
 
-export class PantryItems extends Typegoose {
+export class PantryItems {
 
     @prop()
     public Name: String;
@@ -40,3 +39,5 @@ export class PantryItems extends Typegoose {
     public UpdatedOn: Date;
 
 }
+
+export const pantryModel = getModelForClass(PantryItems);
