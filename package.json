@@ -10,8 +10,8 @@
     "test:jest": "jest --watch --detectOpenHandles --runInBand",
     "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd -r tsconfig-paths/register --inspect --respawn start.ts",
     "build:prod": "rm -rf dist/* && tsc && npm run make:folder-structure",
-    
-    "heroku-postbuild": "npm run build:prod",
+
+    "postinstall": "npm run build:prod",
 
     "copy:repository": "cp -r src/controllers/coolshare/repository dist/src/controllers/coolshare",
     "copy:thumbnails": "cp -r thumbnails dist/thumbnails",
