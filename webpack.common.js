@@ -2,15 +2,12 @@ const webpack = require('webpack');
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
     entry: ['webpack/hot/poll?100', './start.ts'],
-    watch: true,
     target: 'node',
-    devtool: 'source-maps',
-    mode: 'development',
     externals: [
         nodeExternals({
             whitelist: ['webpack/hot/poll?100'],
@@ -35,13 +32,13 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
         plugins: [
+            // @ts-ignore
             new TsconfigPathsPlugin({ configFile: './tsconfig.json' })
         ]
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new webpack.ProgressPlugin(),
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.ProgressPlugin()
     ],
     output: {
         path: path.join(__dirname, 'dist'),

@@ -11,7 +11,7 @@
     "build:webpack": "webpack",
     "build-ts": "rm -rf dist/* && tsc && npm run make-dir-structure",
     "make-dir-structure": "npm run copy-repo && npm run make-directories && npm run copy-thumbnail-images",
-    "heroku-postbuild": "npm run wp:build",
+    "heroku-postbuild": "webpack --config webpack.prod.js --progress",
     "start": "npm run serve",
     "serve": "node dist/start.js",
     "watch-node": "nodemon dist/start.js",
@@ -111,6 +111,7 @@
     "tslint": "^5.18.0",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
+    "webpack-merge": "^4.2.2",
     "webpack-node-externals": "^1.7.2"
   }
 }
