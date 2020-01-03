@@ -23,7 +23,7 @@
     "copy-repo2": "cp -r src/controllers/coolshare/repository dist/coolshare",
     "make-directories": "mkdir dist/uploads && mkdir dist/thumbnails",
     "copy-thumbnail-images": "cp -r thumbnails/* dist/thumbnails",
-    "wp:build": "webpack --config webpack.config.js && npm run make-dir-structure",
+    "wp:build": "webpack --config webpack.dev.js && npm run make-dir-structure",
     "wp:start": "npm run make-dir-structure && node dist/main"
   },
   "engines": {

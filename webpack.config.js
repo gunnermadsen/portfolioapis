@@ -40,8 +40,7 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new webpack.ProgressPlugin(),
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.ProgressPlugin()
     ],
     output: {
         path: path.join(__dirname, 'dist'),
