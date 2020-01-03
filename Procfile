@@ -1,1 +1,1 @@
-web: node --inspect dist/main.js
+web: node --inspect dist/start.js

@@ -8,18 +8,18 @@
   "repository": "portfolioapis",
   "scripts": {
     "test:jest": "jest --watch --detectOpenHandles --runInBand",
-    "build:prod": "rm -rf dist/* && tsc && npm run make-dir-structure",
+    "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd -r tsconfig-paths/register --inspect --respawn start.ts",
+    "build:prod": "rm -rf dist/* && tsc && npm run make:folder-structure",
+    
+    "heroku-postbuild": "npm run build:prod",
 
-    "heroku-postbuild": "NODE_ENV=production webpack --config webpack.prod.js --progress && npm run make-dir-structure",
+    "copy:repository": "cp -r src/controllers/coolshare/repository dist/src/controllers/coolshare",
+    "copy:thumbnails": "cp -r thumbnails dist/thumbnails",
 
-    "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
+    "make:folder-structure": "npm run copy:repository && npm run make:directories && npm run copy:thumbnails",
+    "make:directories": "mkdir dist/uploads && mkdir dist/src/controllers/coolshare/temp",
 
-    "make-dir-structure": "npm run copy-repo && npm run make-directories && npm run copy-thumbnail-images",
-    "copy-repo": "cp -r src/controllers/coolshare/repository dist",
-    "make-directories": "mkdir dist/uploads && mkdir dist/thumbnails && mkdir dist/temp",
-    "copy-thumbnail-images": "cp -r thumbnails/* dist/thumbnails",
-
-    "wp:build": "webpack --config webpack.dev.js && npm run make-dir-structure",
+    "wp:build": "webpack --config webpack.dev.js && npm run make:directories",
     "wp:start": "npm run make-dir-structure && node dist/main"
   },
   "engines": {
@@ -103,6 +103,7 @@
     "ts-loader": "^6.2.1",
     "ts-node": "^8.5.4",
     "ts-node-dev": "^1.0.0-pre.44",
+    "tsconfig-paths": "^3.9.0",
     "tsconfig-paths-webpack-plugin": "^3.2.0",
     "tslint": "^5.18.0",
     "webpack": "^4.41.5",

@@ -4,7 +4,8 @@
         "dist", 
         "webpack.config.js", 
         "temp", 
-        "./src/controllers/coolshare/repository"
+        // "./src/controllers/coolshare/repository",
+        "webpack.**.js"
     ],
     "compilerOptions": {
         "outDir": "./dist",
@@ -32,15 +33,9 @@
         ],
         "baseUrl": "./src",
         "paths": {
-            "@controllers/*": [
-                "controllers/*"
-            ],
-            "@models/*": [
-                "models/*"
-            ],
-            "@middleware/*": [
-                "middleware/*"
-            ]
+            "@controllers/*": ["controllers/*"],
+            "@models/*": ["models/*"],
+            "@middleware/*": ["middleware/*"]
         }
     }
 }
