@@ -94,7 +94,6 @@ export class PortfolioServer extends Server {
       response.locals.message = error.message
       response.locals.error = request.app.get('env') === 'development' ? error : {}
       response.status(500).json({ message: error })
-      
     })
   }
 
