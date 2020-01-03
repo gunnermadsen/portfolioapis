@@ -8,17 +8,14 @@
   "repository": "portfolioapis",
   "scripts": {
     "test:jest": "jest --watch --detectOpenHandles --runInBand",
-    "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd -r tsconfig-paths/register --inspect --respawn start.ts",
+    "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
     "build:prod": "rm -rf dist/* && tsc && npm run make:folder-structure",
-
     "postinstall": "npm run build:prod",
-
+    "start-server": "ts-node ./start.ts",
     "copy:repository": "cp -r src/controllers/coolshare/repository dist/src/controllers/coolshare",
     "copy:thumbnails": "cp -r thumbnails dist/thumbnails",
-
     "make:folder-structure": "npm run copy:repository && npm run make:directories && npm run copy:thumbnails",
     "make:directories": "mkdir dist/uploads && mkdir dist/src/controllers/coolshare/temp",
-
     "wp:build": "webpack --config webpack.dev.js && npm run make:directories",
     "wp:start": "npm run make-dir-structure && node dist/main"
   },
@@ -31,6 +28,11 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/"
     ]
+  },
+  "_moduleAliases": {
+    "@controllers": "src/controllers",
+    "@models": "src/models",
+    "@middleware": "src/middleware"
   },
   "dependencies": {
     "@decorators/di": "^1.0.2",

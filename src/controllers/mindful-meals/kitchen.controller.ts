@@ -3,7 +3,7 @@ import { recipesModel } from '../../models/cookbook.model';
 import { Controller, Post, Middleware, Get, Put, Delete } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import * as crypto from 'crypto';
-import { pantryModel } from '@models/pantry.model';
+import { pantryModel } from '../../models/pantry.model';
 
 
 @Controller('api/kitchen')

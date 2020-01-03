@@ -1,3 +1,6 @@
+
+// require('module-alias/register')
+
 import { PortfolioServer } from './app'
 
 // declare const module: any
