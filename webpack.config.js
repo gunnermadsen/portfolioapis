@@ -4,12 +4,16 @@ const nodeExternals = require('webpack-node-externals');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
+const isProduction = typeof process.env.NODE_ENV !== 'undefined' && process.env.NODE_ENV === 'production';
+const mode = isProduction ? 'production' : 'development';
+const devtool = isProduction ? false : 'inline-source-map';
+
 module.exports = {
     entry: ['webpack/hot/poll?100', './start.ts'],
     watch: true,
     target: 'node',
-    // devtool: "source-map",
-    mode: 'development',
+    devtool: devtool,
+    mode: mode,
     externals: [
         nodeExternals({
             whitelist: ['webpack/hot/poll?100'],
@@ -25,6 +29,9 @@ module.exports = {
                 test: /.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/,
+                // options: {
+                //     transpileOnly: true
+                // }
             },
         ],
     },
@@ -43,7 +50,8 @@ module.exports = {
         path: path.join(__dirname, 'dist'),
         filename: 'main.js',
     },
-    // optimization: {
-    //     namedModules: true
-    // }
+    optimization: {
+        namedModules: true,
+        minimize: false
+    }
 };
