@@ -10,7 +10,7 @@
         "outDir": "./dist",
         "incremental": true,
         "sourceMap": true,
-        "declaration": true,
+        // "declaration": true,
         "checkJs": true,
         "allowJs": true,
         "module": "commonjs",

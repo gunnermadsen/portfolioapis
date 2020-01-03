@@ -8,21 +8,17 @@
   "repository": "portfolioapis",
   "scripts": {
     "test:jest": "jest --watch --detectOpenHandles --runInBand",
-    "build:webpack": "webpack",
-    "build-ts": "rm -rf dist/* && tsc && npm run make-dir-structure",
+    "build:prod": "rm -rf dist/* && tsc && npm run make-dir-structure",
+
+    "heroku-postbuild": "NODE_ENV=production webpack --config webpack.prod.js --progress && npm run make-dir-structure",
+
+    "build:dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
+
     "make-dir-structure": "npm run copy-repo && npm run make-directories && npm run copy-thumbnail-images",
-    "heroku-postbuild": "webpack --config webpack.prod.js --progress",
-    "start": "npm run serve",
-    "serve": "node dist/start.js",
-    "watch-node": "nodemon dist/start.js",
-    "debug:remote": "heroku ps:forward 9229 -a portfolioapis",
-    "watch-ts": "tsc -w",
-    "start-server": "ts-node ./start.ts",
-    "dev": "cross-env TZ=UTC NODE_ENV=development tsnd --inspect --respawn start.ts",
     "copy-repo": "cp -r src/controllers/coolshare/repository dist",
-    "copy-repo2": "cp -r src/controllers/coolshare/repository dist/coolshare",
-    "make-directories": "mkdir dist/uploads && mkdir dist/thumbnails",
+    "make-directories": "mkdir dist/uploads && mkdir dist/thumbnails && mkdir dist/temp",
     "copy-thumbnail-images": "cp -r thumbnails/* dist/thumbnails",
+
     "wp:build": "webpack --config webpack.dev.js && npm run make-dir-structure",
     "wp:start": "npm run make-dir-structure && node dist/main"
   },
