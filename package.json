@@ -11,7 +11,7 @@
     "build:webpack": "webpack",
     "build-ts": "rm -rf dist/* && tsc && npm run make-dir-structure",
     "make-dir-structure": "npm run copy-repo && npm run make-directories && npm run copy-thumbnail-images",
-    "postinstall": "npm run wp:build",
+    "heroku-postbuild": "npm run wp:build",
     "start": "npm run serve",
     "serve": "node dist/start.js",
     "watch-node": "nodemon dist/start.js",
