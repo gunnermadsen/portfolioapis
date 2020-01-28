@@ -15,16 +15,11 @@ export class KitchenController {
 
         try {
 
-            let recipes = await recipesModel.find({}, null, { limit: 15 } ).lean();
+            const recipes = await recipesModel.find({}, null, { limit: 15 } ).lean();
 
-            let count = await recipesModel.count({});
+            const count = await recipesModel.count({});
 
             if (recipes) {
-
-                recipes.map((recipe: any) => {
-                    delete recipe._id;
-                    return recipe.id = this.generateId(recipe.label);
-                });
 
                 return response.status(200).json({ recipes: recipes, count: count });
             }
@@ -37,6 +32,30 @@ export class KitchenController {
         }
 
     }
+
+    @Get('cookbook/search')
+    // @Middleware(JwtInterceptor.checkJWTToken)
+    public async searchForRecipeByName(request: Request, response: Response): Promise<Response | void> {
+        
+        const searchTerm = request.query.q
+        const limit = parseInt(request.query.limit)
+        
+        if (!searchTerm || isNaN(limit)) {
+            return response.status(400).end()
+        }
+
+        const searchExp = new RegExp(searchTerm)
+
+        try {
+            const recipes = await recipesModel.find({ label: { $regex: searchExp, $options: 'gi' }}).lean().limit(limit)
+
+            return response.status(200).json(recipes)
+        } catch (error) {
+            return response.status(500).end()
+        }
+
+    }
+
 
     @Post('cookbook')
     @Middleware(JwtInterceptor.checkJWTToken)
@@ -198,7 +217,6 @@ export class KitchenController {
 
         }
     }
-
 
     private async checkExpirationStatus(pantry: any[]): Promise<any> {
 
