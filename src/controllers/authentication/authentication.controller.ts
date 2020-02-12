@@ -19,32 +19,31 @@ export class UserController {
     @Post('login')
     public async login(request: Request, response: Response): Promise<Response> {
 
-        const userName = request.body.UserName;
-        const password = request.body.Password;
+        const { UserName, Password } = request.body
 
         try {
 
-            const user = await userModel.findOne({ UserName: userName });
+            const user = await userModel.findOne({ UserName: UserName });
 
             if (user) {
 
-                const hashesDoMatch = user.validatePassword(password)
+                const hashesDoMatch = user.validatePassword(Password)
         
-                if (hashesDoMatch && user.UserName === userName) {
+                if (hashesDoMatch && user.UserName === UserName) {
                     
                     const { hash, ...userWithoutHash } = user.toObject();
-                    const token = await user.generateSessionToken().catch(error => { throw `Unable to get token: ${error || null}` });
+                    const token = user.generateSessionToken() //.catch(error => { throw `Unable to get token: ${error || null}` });
 
-                    const csrfToken = await user.generateCsrfToken();
+                    const csrfToken = user.generateCsrfToken();
 
                     response.cookie("SESSIONID", token, { maxAge: 3600000, httpOnly: true, secure: false });
                     response.cookie("XSRF-TOKEN", csrfToken)
 
-                    let result: any = {
+                    const result = {
                         JWTToken: token,
                         CSRFToken: csrfToken,
                         Id: user.id,
-                        UserName: userName
+                        UserName: UserName
                     }
 
                     return response.status(200).json(result);
