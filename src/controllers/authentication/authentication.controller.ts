@@ -28,9 +28,9 @@ export class UserController {
 
             if (user) {
 
-                const hash = user.validatePassword(password)
+                const hashesDoMatch = user.validatePassword(password)
         
-                if (user.Hash === hash && user.UserName === userName) {
+                if (hashesDoMatch && user.UserName === userName) {
                     
                     const { hash, ...userWithoutHash } = user.toObject();
                     const token = await user.generateSessionToken().catch(error => { throw `Unable to get token: ${error || null}` });
@@ -52,7 +52,8 @@ export class UserController {
                 } else {
         
                     return response.status(400).json({
-                        message: "Your username or password is incorrect"
+                        message: "Your username or password is incorrect.",
+                        status: 400
                     })
 
                 }
