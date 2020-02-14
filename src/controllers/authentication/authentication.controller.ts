@@ -10,8 +10,6 @@ import { LogInterceptorController } from '../../middleware/log.interceptor';
 import { userModel } from '../../models/authentication.model';
 import { notificationModel } from '../../models/notifications.model';
 
-
-
 @Controller('api/users')
 @ClassMiddleware(LogInterceptorController.logNetworkRequest)
 export class UserController {
@@ -59,7 +57,8 @@ export class UserController {
             } else {
 
                 return response.status(400).json({
-                    message: "Your username or password is incorrect."
+                    message: "Your username or password is incorrect.",
+                    status: 400
                 })
                 
             }

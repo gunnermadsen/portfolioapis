@@ -1,6 +1,7 @@
 import { prop, getModelForClass } from '@typegoose/typegoose';
 
 export class Notifications {
+    
     @prop()
     public Notifications: Notifications[];
 

@@ -2,7 +2,7 @@
     "compileOnSave": false,
     "exclude": [
         "dist",
-        "webpack.config.js",
+        "build/webpack.config.js",
         "temp",
         "./src/controllers/coolshare/repository",
         "webpack.**.js"

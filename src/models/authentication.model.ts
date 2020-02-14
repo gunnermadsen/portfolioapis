@@ -47,10 +47,10 @@ export class User {
 
     public validatePassword(this: DocumentType<User>, Password: string) {
         let Hash = crypto.pbkdf2Sync(Password, this.Salt, 1000, 64, 'sha512').toString('hex');
-        return this.Hash = Hash;
+        return this.Hash === Hash;
     }
 
-    public async generateSessionToken(this: DocumentType<User>): Promise<string> {
+    public generateSessionToken(this: DocumentType<User>): string {
 
         let expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
@@ -61,18 +61,18 @@ export class User {
             exp: Math.floor(expiry.getTime() / 1000)
         }
 
-        return await jwt.sign(payload, RSA_PRIVATE_KEY, { algorithm: 'RS256'});
+        return jwt.sign(payload, RSA_PRIVATE_KEY, { algorithm: 'RS256'});
     }
 
     public async verifySessionToken(this: DocumentType<User>, token: string) {
 
-        const payload = await jwt.verify(token, RSA_PUBLIC_KEY);
+        const payload = jwt.verify(token, RSA_PUBLIC_KEY);
         return payload;
         
     }
 
-    public async generateCsrfToken(this: DocumentType<User>) {
-        const payload = await crypto.randomBytes(32).toString('hex');
+    public generateCsrfToken(this: DocumentType<User>) {
+        const payload = crypto.randomBytes(32).toString('hex');
         return payload;
     }
 }

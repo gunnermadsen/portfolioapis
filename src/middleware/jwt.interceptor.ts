@@ -1,33 +1,29 @@
-import { User } from "../models/authentication.model";
-import { Request, Response } from 'express';
-import { NextFunction } from "express";
-import { getModelForClass } from "@typegoose/typegoose";
+import { User } from "../models/authentication.model"
+import { Request, Response } from 'express'
+import { NextFunction } from "express"
+import { getModelForClass } from "@typegoose/typegoose"
 
-const UserModel = getModelForClass(User);
+const UserModel = getModelForClass(User)
 
 export class JwtInterceptor {
     public static checkJWTToken(request: Request, response: Response, next: NextFunction): Response {
 
-        let token = request.headers.authorization;
+        let token = request.headers.authorization
 
         if (token) {
 
-            const user = new UserModel();
+            const user = new UserModel()
 
             if (token.startsWith('Bearer ')) {
-                token = token.slice(7, token.length).trimLeft();
+                token = token.slice(7, token.length).trimLeft()
             }
             else {
-                response.status(400).json({ message: "Invalid Token" })
+                return response.status(400).json({ message: "An error occured while retrieving your information" })
             }
 
-            user.verifySessionToken(token).then((data: any) => {
-                response['user'] = data;
-                next();
-            })
-            .catch((error: any) => {
-                return response.status(401).json({ error: error });
-            })
+            response['user'] = user.verifySessionToken(token)
+
+            next()
 
         } else {
             return response.status(400).json({ message: "A valid token is required to access this resource" })

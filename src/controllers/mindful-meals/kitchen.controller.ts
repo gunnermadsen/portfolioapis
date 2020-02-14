@@ -1,10 +1,12 @@
-import { Request, Response } from 'express';
+import { Request, Response, response } from 'express';
 import { recipesModel } from '../../models/cookbook.model';
 import { Controller, Post, Middleware, Get, Put, Delete } from '@overnightjs/core';
 import { JwtInterceptor } from '../../middleware/jwt.interceptor';
 import * as crypto from 'crypto';
 import { pantryModel } from '../../models/pantry.model';
 
+import { IEdamamRecipes } from '../../models/recipes.interface'
+import { KitchenCrawlerService } from './kitchen.crawler.service';
 
 @Controller('api/kitchen')
 export class KitchenController {
@@ -13,15 +15,23 @@ export class KitchenController {
     @Middleware(JwtInterceptor.checkJWTToken)
     public async getAllRecipes(request: Request, response: Response): Promise<Response> {
 
+        const min = request.query.min
+        const max = request.query.max
+
         try {
 
-            const recipes = await recipesModel.find({}, null, { limit: 15 } ).lean();
+            const recipes: IEdamamRecipes[] = await recipesModel.find().lean(); //{}, null, { limit: 30 }
 
-            const count = await recipesModel.count({});
+            // const count = await recipesModel.count({});
 
-            if (recipes) {
+            if (recipes.length) {
 
-                return response.status(200).json({ recipes: recipes, count: count });
+                // this.checkIfIngredientsExist(recipes, new KitchenCrawlerService())
+                // recipes.splice(min, max)
+
+                const result = recipes.splice(min, max)
+
+                return response.status(200).json({ recipes: result, count: 15 });
             }
             else {
                 return response.status(401);
@@ -95,13 +105,13 @@ export class KitchenController {
 
         try {
 
-            let pantry: any[] = await pantryModel.find({ UserId: userId });
+            let pantry: any[] = await pantryModel.find({ UserId: userId })
 
             if (pantry) {
 
-                pantry = await this.checkExpirationStatus(pantry);
+                // const result = await this.checkExpirationStatus(pantry);
 
-                return response.status(200).json({ pantry: pantry });
+                return response.status(200).json(pantry);
             }
             else {
                 return response.status(404).json({ message: "You do not have any pantry items" });
@@ -222,7 +232,7 @@ export class KitchenController {
 
         let now = new Date();
 
-        return await pantry.map((item: any) => {
+        return await pantry.map( async (item: any) => {
 
             item.id = this.generateId(item.Name);
 
@@ -239,6 +249,22 @@ export class KitchenController {
             }
             return item;
         });
+    }
+
+
+    private async checkIfIngredientsExist(recipes: IEdamamRecipes[], crawler: KitchenCrawlerService): Promise<void> {
+        try {
+            for (let i = 0; i < recipes.length; i++) {
+                if (recipes[i].instructions) {
+                    continue
+                }
+
+                const result = await crawler.crawlUrlForRecipes(recipes[i].url)
+
+            }
+        } catch (error) {
+            return response.status(500).end()
+        }
     }
 
 

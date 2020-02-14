@@ -491,17 +491,6 @@ export class RepositoryController {
         } 
     }
 
-    public prepareAndSendDownload(resource: string, dir: string): void {
-        const mimeType = mime.getType(resource)
-
-        response.setHeader('Content-Type', mimeType)
-        response.setHeader('Content-Transfer-Encoding', 'binary')
-        response.setHeader('Content-disposition', `attachment filename=${resource}`)
-
-        response.download(dir)
-    }
-
-
     public async createThumbnailFromFile(source: string, id: string, file: string): Promise<void> {
 
         const deleteFolder = async (dir) => await fs.remove(dir)
