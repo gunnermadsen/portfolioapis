@@ -80,6 +80,7 @@ export class PortfolioServer extends Server {
         'https://coolshare.herokuapp.com',
         'https://www.shareily.com',
         'https://mindfulmeals.herokuapp.com',
+        'http://meetily.herokuapp.com',
         'https://meetily.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
