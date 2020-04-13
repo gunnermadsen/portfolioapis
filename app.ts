@@ -64,18 +64,7 @@ export class PortfolioServer extends Server {
 
     const upload = multer({ storage: storage })
 
-    this.app.use(helmet())
-    this.app.use(upload.any())
-
-    
-    this.app.use(compression())
-    this.app.use(express.static('thumbnails'))
-    this.app.use(express.static('assets'))
-    this.app.disable('x-powered-by')
-    this.app.use(bodyParser.json())
-    this.app.use(bodyParser.urlencoded({ extended: true }))
-
-    this.app.use(cors({
+    const options = {
       origin: [
         'http://localhost:4200',
         'https://gunner-madsen.com',
@@ -88,10 +77,23 @@ export class PortfolioServer extends Server {
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
       allowedHeaders: [
-        'Origin, Access-Control-Allow-Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'
+        'Origin', 'Access-Control-Allow-Origin', 'X-Requested-With', 'Accept-Encoding', 'Content-Disposition', 'Content-Type', 'Accept', 'Authorization', 'X-XSRF-TOKEN'
       ],
       credentials: true
-    }))
+    }
+
+    this.app.use(cors(options))
+
+    this.app.use(helmet())
+    this.app.use(upload.any())
+
+    
+    this.app.use(compression())
+    this.app.use(express.static('thumbnails'))
+    this.app.use(express.static('assets'))
+    this.app.disable('x-powered-by')
+    this.app.use(bodyParser.json())
+    this.app.use(bodyParser.urlencoded({ extended: true }))
 
     this.app.use(morgan('dev'))
     this.app.use(cookieParser())
