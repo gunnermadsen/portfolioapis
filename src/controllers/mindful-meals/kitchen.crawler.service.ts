@@ -1,5 +1,4 @@
 import * as Crawler from 'crawler'
-import jsdom from 'jsdom'
 
 export class KitchenCrawlerService {
 

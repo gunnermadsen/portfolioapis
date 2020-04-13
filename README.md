@@ -2,12 +2,15 @@
 
 ## Dependencies
 
-### Each of following projects uses my service in some capacity:
+### Each of the following projects uses my service in some capacity:
 
-[Gunner Madsen Portfolio](https://www.gunner.madsen.com)
-[Shareily](https://www.shareily.com)
-[Meetilly](https://www.meetilly.com)
-[MindfulMeals](https://www.mindfulmeals.portfolioapps.com)
+[Gunner Madsen - Front End Developer Portfolio](https://www.gunner.madsen.com)
+[Coolshare](https://coolshare.herokuapp.com)
+[Meetilly](https://meetilly.herokuapp.com)
+[MindfulMeals](https://mindfulmeals.herokuapp.com)
+
+
+## Please feel free to view my other projects on my [Github Homepage](https://github.com/gunnermadsen)
 
 ## Running the Server
 

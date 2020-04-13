@@ -23,6 +23,8 @@ import * as express from 'express'
 import * as cluster from 'cluster'
 import * as helmet from 'helmet'
 import * as http from 'http'
+import { join } from 'path'
+import { StreamlyController } from './src/controllers/streamly/streamly.controller'
 
 export class PortfolioServer extends Server {
 
@@ -65,6 +67,7 @@ export class PortfolioServer extends Server {
     this.app.use(helmet())
     this.app.use(upload.any())
 
+    
     this.app.use(compression())
     this.app.use(express.static('thumbnails'))
     this.app.use(express.static('assets'))
@@ -77,6 +80,7 @@ export class PortfolioServer extends Server {
         'http://localhost:4200',
         'http://www.gunner-madsen.com',
         'https://gunner-madsen.com',
+        'https://admin.gunner-madsen.com',
         'https://coolshare.herokuapp.com',
         'https://www.shareily.com',
         'https://mindfulmeals.herokuapp.com',
@@ -84,12 +88,16 @@ export class PortfolioServer extends Server {
         'https://meetily.herokuapp.com'
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
-      allowedHeaders: ['Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'],
+      allowedHeaders: [
+        'Origin, Access-Control-Allow-Origin, X-Requested-With, Accept-Encoding, Content-Disposition, Content-Type, Accept, Authorization, X-XSRF-TOKEN'
+      ],
       credentials: true
     }))
 
     this.app.use(morgan('dev'))
     this.app.use(cookieParser())
+
+    this.app.use(express.static('src/controllers/streamly'))
 
     this.app.use((error: Error, request: Request, response: Response, next: NextFunction) => {
       response.locals.message = error.message
@@ -108,8 +116,18 @@ export class PortfolioServer extends Server {
     const accountController = new AccountController()
     const notificationController = new NotificationController()
     const meetingsController = new MeetingsController()
+    const streamlyController = new StreamlyController()
 
-    super.addControllers([ userController, repoController, kitchenController, accountController, notificationController, meetingsController ])
+
+    super.addControllers([ 
+      userController, 
+      repoController, 
+      kitchenController, 
+      accountController, 
+      notificationController, 
+      meetingsController, 
+      streamlyController 
+    ])
   }
 
   public start(): void {

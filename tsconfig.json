@@ -4,8 +4,8 @@
         "dist",
         "build/webpack.config.js",
         "temp",
-        "./src/controllers/coolshare/repository",
-        "webpack.**.js"
+        "./node_modules",
+        "./src/controllers/coolshare/repository"
     ],
     "compilerOptions": {
         "outDir": "./dist",
