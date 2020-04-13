@@ -64,7 +64,7 @@ export class User {
         return jwt.sign(payload, RSA_PRIVATE_KEY, { algorithm: 'RS256'});
     }
 
-    public async verifySessionToken(this: DocumentType<User>, token: string) {
+    public verifySessionToken(this: DocumentType<User>, token: string) {
 
         const payload = jwt.verify(token, RSA_PUBLIC_KEY);
         return payload;

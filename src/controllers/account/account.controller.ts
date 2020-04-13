@@ -19,18 +19,18 @@ export class AccountController {
 
         try {
 
-            let user = await userModel.findById({ _id: response['user']._id })
-            let picture = await userImagesModel.findById({ _id: response['user']._id })
+            const user = await userModel.findById({ _id: response['user']._id })
+            // let picture = await userImagesModel.findById({ _id: response['user']._id })
 
             if (user) {
 
                 // let image = Buffer.from(picture.ProfilePicture);
                 
-                let account = {
+                const account = {
                     Id: user._id,
                     UserName: user.UserName,
                     Email: user.Email,
-                    ProfilePicture: picture,
+                    ProfilePicture: user.ProfilePicture,
                     FirstName: user.FirstName,
                     LastName: user.LastName,
                 }
