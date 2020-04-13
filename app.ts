@@ -78,14 +78,8 @@ export class PortfolioServer extends Server {
     this.app.use(cors({
       origin: [
         'http://localhost:4200',
-        'http://www.gunner-madsen.com',
-        'https://gunner-madsen.com',
-        'https://admin.gunner-madsen.com',
-        'https://coolshare.herokuapp.com',
-        'https://www.shareily.com',
-        'https://mindfulmeals.herokuapp.com',
-        'http://meetily.herokuapp.com',
-        'https://meetily.herokuapp.com'
+        /\.gunner-madsen\.com$/,
+        /\.herokuapp\.com$/
       ],
       methods: ['POST', 'PUT', 'OPTIONS', 'DELETE', 'GET', 'PATCH'],
       allowedHeaders: [
